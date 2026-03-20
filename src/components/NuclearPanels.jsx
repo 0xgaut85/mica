@@ -143,7 +143,7 @@ export default function NuclearPanels() {
             >
               <img
                 src={IMG}
-                alt="Baseload energy infrastructure — always-on compute backbone"
+                alt="Baseload energy infrastructure, always-on compute backbone"
                 className={imgClass}
                 onError={onErr}
                 draggable={false}
@@ -156,9 +156,9 @@ export default function NuclearPanels() {
 
             <div
               ref={leftTextRef}
-              className="absolute z-[30] left-[2%] top-[6%] w-[min(34%,14rem)] sm:left-[3%] sm:top-[8%] sm:w-[min(30%,15rem)]"
+              className="absolute z-[30] left-[1%] top-[4%] w-[min(31%,13rem)] sm:left-[2%] sm:top-[6%] sm:w-[min(29%,14rem)]"
             >
-              <p className="mb-1.5 font-mono text-[7px] tracking-[0.26em] text-red-mica sm:text-[8px]">
+              <p className="mb-2 font-mono text-[7px] tracking-[0.26em] text-red-mica sm:text-[8px]">
                 {NUCLEAR_LEFT_LABEL}
               </p>
               <p className="font-mono text-[9px] leading-[1.75] text-gray-800 sm:text-[10px] md:text-[11px]">
@@ -168,9 +168,9 @@ export default function NuclearPanels() {
 
             <div
               ref={rightTextRef}
-              className="absolute z-[30] right-[2%] bottom-[6%] w-[min(34%,14rem)] text-right sm:right-[3%] sm:bottom-[8%] sm:w-[min(30%,15rem)]"
+              className="absolute z-[30] right-[1%] bottom-[4%] w-[min(31%,13rem)] text-right sm:right-[2%] sm:bottom-[6%] sm:w-[min(29%,14rem)]"
             >
-              <p className="mb-1.5 font-mono text-[7px] tracking-[0.26em] text-red-mica sm:text-[8px]">
+              <p className="mb-2 font-mono text-[7px] tracking-[0.26em] text-red-mica sm:text-[8px]">
                 {NUCLEAR_RIGHT_LABEL}
               </p>
               <p className="font-mono text-[9px] leading-[1.75] text-gray-800 sm:text-[10px] md:text-[11px]">

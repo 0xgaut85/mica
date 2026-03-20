@@ -52,7 +52,13 @@ export default function About() {
 
     const labelBottom = labelRowRef.current.getBoundingClientRect().bottom
     const gridTop = gridRef.current.getBoundingClientRect().top
-    const hY = ((labelBottom + gridTop) / 2) - sRect.top
+    const lbRel = labelBottom - sRect.top
+    const gtRel = gridTop - sRect.top
+    const gAbout = gtRel - lbRel
+    const hY = Math.min(
+      lbRel + Math.max(14, gAbout * 0.42),
+      gtRel - 10,
+    )
 
     const lgUp = typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches
     const colRight = headingColRef.current.getBoundingClientRect().right
@@ -71,7 +77,10 @@ export default function About() {
       const sw = sr.width
       const lb = labelRowRef.current.getBoundingClientRect().bottom
       const gt = gridRef.current.getBoundingClientRect().top
-      const hy = ((lb + gt) / 2) - sr.top
+      const lbR = lb - sr.top
+      const gtR = gt - sr.top
+      const ga = gtR - lbR
+      const hy = Math.min(lbR + Math.max(14, ga * 0.42), gtR - 10)
       const lg = window.matchMedia('(min-width: 1024px)').matches
       const cr = headingColRef.current.getBoundingClientRect().right
       const cl = cardRef.current.getBoundingClientRect().left
@@ -201,7 +210,7 @@ export default function About() {
 
         <div ref={gridRef} className="grid grid-cols-1 lg:grid-cols-[5fr_3fr] gap-16 lg:gap-20">
           <div ref={headingColRef}>
-            <h2 className="font-display font-extralight text-5xl md:text-7xl lg:text-[5.5rem] leading-[1.08] mb-8">
+            <h2 className="font-display font-extralight text-5xl md:text-7xl lg:text-[5.5rem] leading-[1.1] mb-8 break-words">
               {headingLines.map((line, i) => (
                 <span key={i} className="block overflow-hidden">
                   <span
@@ -214,8 +223,8 @@ export default function About() {
               ))}
             </h2>
             <p ref={paragraphRef} className="font-mono text-[13px] text-gray-700 leading-[1.8] max-w-lg">
-              mica is a decentralized protocol that coordinates AI workloads —
-              agent swarms, inference, fine-tuning — across a global mesh of
+              mica is a decentralized protocol that coordinates AI workloads (agent
+              swarms, inference, fine-tuning) across a global mesh of
               compute nodes. Smart contracts handle scheduling, energy-price
               oracles find the cheapest power, and every job is settled on-chain.
               Pure infrastructure, zero trust assumptions.
@@ -237,7 +246,7 @@ export default function About() {
                   Every job is verified on-chain. Nodes stake tokens and earn
                   rewards for compute delivered. Energy-price oracles route work
                   to the cheapest available power. No middlemen, no opaque
-                  billing — just verifiable, cost-optimized execution.
+                  billing. Just verifiable, cost-optimized execution.
                 </p>
               </div>
             </div>

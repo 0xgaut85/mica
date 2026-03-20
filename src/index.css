@@ -5,7 +5,7 @@
 :root {
   --red: #FF0032;
   --white: #FFFFFF;
-  /* Blanc cassé — main page / light surfaces */
+  /* Blanc cassé: main page / light surfaces */
   --cream: #FAF7F2;
   --black: #060606;
   --gray: #999999;
@@ -315,7 +315,7 @@ body {
     position: relative;
   }
 
-  /* Legal / consent scroll areas — thin track, mica-tinted thumb */
+  /* Legal / consent scroll areas: thin track, mica-tinted thumb */
   .legal-scrollbar {
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 0, 50, 0.55) rgba(6, 6, 6, 0.06);

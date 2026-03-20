@@ -122,7 +122,13 @@ export default function Features() {
 
     const headingBottom = headingRowRef.current.getBoundingClientRect().bottom
     const cardsTop = cardsGridRef.current.getBoundingClientRect().top
-    const hY = ((headingBottom + cardsTop) / 2) - sRect.top
+    const hbRel = headingBottom - sRect.top
+    const ctRel = cardsTop - sRect.top
+    const gapFeatures = ctRel - hbRel
+    const hY = Math.min(
+      hbRel + Math.max(14, gapFeatures * 0.45),
+      ctRel - 10,
+    )
 
     const mdUp = typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches
     const c0 = cardRefs.current[0]
@@ -145,7 +151,10 @@ export default function Features() {
       const sw = sr.width
       const hb = headingRowRef.current.getBoundingClientRect().bottom
       const ct = cardsGridRef.current.getBoundingClientRect().top
-      const hy = ((hb + ct) / 2) - sr.top
+      const hbR = hb - sr.top
+      const ctR = ct - sr.top
+      const g = ctR - hbR
+      const hy = Math.min(hbR + Math.max(14, g * 0.45), ctR - 10)
       const md = window.matchMedia('(min-width: 768px)').matches
       const a = cardRefs.current[0]
       const b = cardRefs.current[1]
@@ -261,7 +270,7 @@ export default function Features() {
                 The core mechanisms
               </span>
             </div>
-            <h2 ref={headingWrapperRef} className="font-display font-extralight text-5xl md:text-7xl lg:text-[5.5rem] leading-[1.08] max-w-4xl">
+            <h2 ref={headingWrapperRef} className="font-display font-extralight text-5xl md:text-7xl lg:text-[5.5rem] leading-[1.1] max-w-[min(100%,42rem)] break-words">
               <span className="block overflow-hidden">
                 <span ref={heading1Ref} className="block">
                   Four primitives that eliminate
@@ -280,7 +289,7 @@ export default function Features() {
           >
             <img
               src="/dock.jpeg"
-              alt="Container port at dawn—distributed coordination at industrial scale"
+              alt="Container port at dawn: distributed coordination at industrial scale"
               loading="lazy"
               decoding="async"
               className="absolute inset-0 w-full h-full object-cover"

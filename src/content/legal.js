@@ -1,4 +1,4 @@
-/** Tailored legal copy for mica landing — not a substitute for counsel. */
+/** Tailored legal copy for mica landing (not a substitute for counsel). */
 
 export const TERMS_TITLE = 'Terms of Service'
 export const PRIVACY_TITLE = 'Privacy Policy'

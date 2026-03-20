@@ -42,7 +42,7 @@ const linkBtnClass =
 /**
  * X position (relative to footer section) for the vertical line: center of the grid gutter
  * between column 2 (Company) and column 3 (Resources). Uses the links grid box + computed
- * gap + 3 equal tracks — not column DOM rects (those can disagree with visible text).
+ * gap + 3 equal tracks (not column DOM rects; those can disagree with visible text).
  */
 function footerVLineXFromGrid(sectionRect, gridEl, smUp) {
   const sw = sectionRect.width
@@ -177,7 +177,7 @@ export default function Footer() {
           <div ref={brandRef}>
             <img ref={logoImgRef} src="/ourlogo.png" alt="mica" className="h-40 md:h-56 lg:h-72 w-auto mb-6" />
             <p className="font-display font-extralight text-3xl md:text-4xl lg:text-5xl text-gray-700 leading-[1.3] max-w-3xl">
-              Decentralized energy protocol for AI compute — verified on-chain.
+              Decentralized energy protocol for AI compute, verified on-chain.
             </p>
             <a
               href="mailto:contact@mica.energy"

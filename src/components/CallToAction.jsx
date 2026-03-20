@@ -151,7 +151,7 @@ export default function CallToAction() {
           </h2>
 
           <p ref={descRef} className="font-mono text-[12px] text-white/65 leading-[1.8] max-w-xl mb-12">
-            mica replaces expensive, centralized compute with a blockchain-coordinated network that routes AI agent workloads to the cheapest energy — verified on-chain, settled in seconds.
+            mica replaces expensive, centralized compute with a blockchain-coordinated network that routes AI agent workloads to the cheapest energy, verified on-chain, settled in seconds.
           </p>
 
           <div className="flex flex-wrap gap-4">

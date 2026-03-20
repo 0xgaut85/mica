@@ -1,16 +1,16 @@
 # OIL & AI: The Hidden Link and Current Disruption
 
-**Post for X / Social / Blog — March 2026**
+**Post for X / Social / Blog, March 2026**
 
 ---
 
-## Short-form (X/Twitter — 280 chars)
+## Short-form (X/Twitter, 280 chars)
 
 **Option A:**
-Oil powers the grid that trains AI. Data centers, cooling, supply chains—all tied to fossil fuels. As oil markets disrupt, so does AI infrastructure. Decentralized, energy-efficient training isn't optional anymore.
+Oil powers the grid that trains AI. Data centers, cooling, supply chains, all tied to fossil fuels. As oil markets disrupt, so does AI infrastructure. Decentralized, energy-efficient training isn't optional anymore.
 
 **Option B:**
-AI runs on electricity. Electricity runs on oil and gas. Price spikes, supply shocks, geopolitics—they ripple straight into GPU clusters. The case for on-chain, energy-aware AI infrastructure just got stronger.
+AI runs on electricity. Electricity runs on oil and gas. Price spikes, supply shocks, geopolitics: they ripple straight into GPU clusters. The case for on-chain, energy-aware AI infrastructure just got stronger.
 
 **Option C (punchy):**
 Oil → grid → data center → LLM. One broken link, entire pipelines stall. Energy-efficient, distributed AI isn't greenwashing. It's resilience.
@@ -24,10 +24,10 @@ AI's biggest dependency isn't GPUs. It's oil.
 
 **Body:**
 - Training runs consume massive electricity. Most of that comes from grids still fed by fossil fuels.
-- Data center cooling, hardware supply chains, and cloud regions—all sensitive to oil and gas prices.
+- Data center cooling, hardware supply chains, and cloud regions, all sensitive to oil and gas prices.
 - Recent disruptions (OPEC cuts, LNG halts, geopolitical shocks) don't just hit your gas bill. They hit model training costs, latency, and availability.
 - Centralized AI clusters = centralized energy risk. One region's power crisis becomes everyone's bottleneck.
-- Decentralized, energy-aware infrastructure spreads that risk. On-chain state, off-chain compute, delta updates—less redundancy, less waste, less exposure to a single fuel source.
+- Decentralized, energy-aware infrastructure spreads that risk. On-chain state, off-chain compute, delta updates: less redundancy, less waste, less exposure to a single fuel source.
 
 **CTA:**
 The future of AI isn't just smarter models. It's smarter infrastructure.

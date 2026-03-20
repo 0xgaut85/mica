@@ -25,7 +25,6 @@ export default function Hero() {
   const btn2Ref = useRef(null)
   const statsRef = useRef(null)
   const statItemsRef = useRef([])
-  const scrollLabelRef = useRef(null)
   const cornerRef = useRef(null)
   const videoRef = useRef(null)
 
@@ -43,7 +42,7 @@ export default function Hero() {
     if (!ready.current || !timeline.current) return
     const tl = timeline.current
 
-    const LINE_GAP = 16
+    const LINE_GAP = 24
 
     const measureLineLayout = () => {
       const el = sectionRef.current
@@ -51,18 +50,25 @@ export default function Hero() {
       const sRect = el.getBoundingClientRect()
       const labelBottom = labelRowRef.current.getBoundingClientRect().bottom
       const titleTop = titleWrapperRef.current.getBoundingClientRect().top
-      const hY = ((labelBottom + titleTop) / 2) - sRect.top
+      const labelBottomRel = labelBottom - sRect.top
+      const titleTopRel = titleTop - sRect.top
+      const gap = titleTopRel - labelBottomRel
+      // Keep H-line in the margin between label and title; never through copy (long labels / big title)
+      const hY = Math.min(
+        labelBottomRel + Math.max(16, gap * 0.42),
+        titleTopRel - 12,
+      )
       const sectionW = sRect.width
       const targetW = Math.max(320, window.innerWidth * 0.5)
       const mediaW = Math.min(Math.max(0, sectionW - 24), targetW)
       const imageLeft = sectionW - mediaW - 24
-      // Vertical guide sits in the gutter — image stays LINE_GAP to the right of the line
+      // Vertical guide sits in the gutter; image stays LINE_GAP to the right of the line
       const vLineX = imageLeft - LINE_GAP
-      // V-line ends at the stats row top border (dashed line above “Open standard REST endpoints”)
+      // V-line ends at the stats row top border (dashed line above stats)
       const statsTop = statsRef.current.getBoundingClientRect().top - sRect.top
       const vLineHeight = Math.max(1, statsTop)
-      // Media lower + clear gap under the red H-line
-      const mediaTop = Math.max(104, hY + LINE_GAP + 12)
+      // Media clears H-line + extra gap so the line never crowds the video
+      const mediaTop = Math.max(112, hY + LINE_GAP + 20)
       return { hY, vLineX, vLineHeight, mediaTop }
     }
 
@@ -101,7 +107,7 @@ export default function Hero() {
     gsap.set(mediaRef.current, { x: '110%', scale: 1.08, opacity: 1 })
     gsap.set(redLineRef.current, { scale: 0, transformOrigin: 'center center' })
     gsap.set(labelTextRef.current, { opacity: 0, x: -15 })
-    // Title stays visible — only label row animates in after blueprint (avoids "missing title")
+    // Title stays visible; only label row animates in after blueprint (avoids "missing title")
     gsap.set(taglineRef.current, { opacity: 0, filter: 'blur(6px)' })
     gsap.set(btn1Ref.current, { opacity: 0, y: 25, scale: 0.85 })
     gsap.set(btn2Ref.current, { opacity: 0, y: 25, scale: 0.85 })
@@ -109,7 +115,6 @@ export default function Hero() {
     statItemsRef.current.forEach((el, i) => {
       if (el) gsap.set(el, { opacity: 0, y: 20 + i * 8 })
     })
-    gsap.set(scrollLabelRef.current, { opacity: 0 })
     gsap.set(cornerRef.current, { opacity: 0, scale: 0.4 })
 
     // Step 1: H-line draws left → right
@@ -145,7 +150,6 @@ export default function Hero() {
       if (el) tl.to(el, { opacity: 1, y: 0, duration: 0.3, ease: 'expo.out' }, '<0.08')
     })
 
-    tl.to(scrollLabelRef.current, { opacity: 1, duration: 0.3 }, '<')
     tl.addLabel('end')
 
     if (videoRef.current) {
@@ -159,7 +163,7 @@ export default function Hero() {
     <section ref={sectionRef} className="section-snap flex items-center noise-overlay">
       <div className="absolute inset-0 dot-grid opacity-40 pointer-events-none" />
 
-      {/* Blueprint lines sit under text/media (z-14/11) — only show in empty whitespace */}
+      {/* Blueprint lines sit under text/media (z-14/11); only show in empty whitespace */}
       <div ref={hLineRef} className="absolute left-0 w-full border-dashed-red-t z-[8] pointer-events-none" />
       <div ref={vLineRef} className="absolute top-0 w-0 border-dashed-red-l z-[8] pointer-events-none" />
       <IntersectionStar ref={starRef} className="absolute z-[9] pointer-events-none" />
@@ -183,11 +187,11 @@ export default function Hero() {
       </div>
 
       <div className="relative z-[14] w-full px-8 md:px-16 lg:px-24">
-        <div className="grid grid-cols-1 lg:grid-cols-[3fr_1fr] gap-8 items-end">
+        <div className="max-w-full lg:max-w-[min(40rem,calc(100vw-50vw-5rem))]">
           <div>
-            <div ref={labelRowRef} className="flex flex-wrap items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
-              <span ref={redLineRef} className="w-2.5 h-2.5 bg-red-mica" />
-              <p ref={labelTextRef} className="font-mono text-[10px] tracking-[0.3em] text-gray-500">
+            <div ref={labelRowRef} className="flex flex-wrap items-center gap-3 sm:gap-4 mb-7 sm:mb-9">
+              <span ref={redLineRef} className="w-2.5 h-2.5 shrink-0 bg-red-mica" />
+              <p ref={labelTextRef} className="font-mono text-[10px] tracking-[0.22em] sm:tracking-[0.28em] text-gray-500 leading-relaxed max-w-[22rem] sm:max-w-none">
                 Decentralized energy protocol for AI compute
               </p>
             </div>
@@ -199,7 +203,7 @@ export default function Hero() {
             </div>
 
             <p ref={taglineRef} className="font-mono text-sm md:text-base mt-10 max-w-xl text-gray-700 leading-relaxed">
-              A blockchain-coordinated network that routes AI agent workloads to the cheapest, cleanest energy — cutting compute costs by half with full on-chain transparency.
+              A blockchain-coordinated network that routes AI agent workloads to the cheapest, cleanest energy while cutting compute costs by half with full on-chain transparency.
             </p>
 
             <div className="flex flex-wrap gap-4 sm:gap-5 mt-12 sm:mt-14">
@@ -234,12 +238,6 @@ export default function Hero() {
                 </div>
               ))}
             </div>
-          </div>
-
-          <div ref={scrollLabelRef} className="hidden lg:flex flex-col items-end justify-end pb-4">
-            <p className="writing-vertical font-mono text-[10px] tracking-[0.25em] text-gray-500">
-              Scroll to explore
-            </p>
           </div>
         </div>
       </div>

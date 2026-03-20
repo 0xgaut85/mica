@@ -5,15 +5,15 @@ import { useSectionTimeline } from '../hooks/useSectionTimeline'
 const bgBlurbs = [
   {
     heading: 'Agent swarms',
-    body: 'Enterprises deploy thousands of autonomous AI agents around the clock. mica\'s protocol distributes those workloads across the cheapest available nodes — verified on-chain, cutting fleet-wide costs by half.',
+    body: 'Enterprises deploy thousands of autonomous AI agents around the clock. mica\'s protocol distributes those workloads across the cheapest available nodes, verified on-chain, cutting fleet-wide costs by half.',
   },
   {
     heading: 'Local inference',
-    body: 'Developers run open-weight LLMs and agent stacks on their own hardware. When jobs outgrow local capacity, mica offloads heavy compute to the network — same API, no vendor lock-in, tokenized billing.',
+    body: 'Developers run open-weight LLMs and agent stacks on their own hardware. When jobs outgrow local capacity, mica offloads heavy compute to the network: same API, no vendor lock-in, tokenized billing.',
   },
   {
     heading: 'Scale without the bill',
-    body: 'Every token generated has an energy cost. As agent swarms scale to millions of daily calls, mica\'s smart contracts lock in flat rates and eliminate idle-node waste — predictable, on-chain pricing at any scale.',
+    body: 'Every token generated has an energy cost. As agent swarms scale to millions of daily calls, mica\'s smart contracts lock in flat rates and eliminate idle-node waste, with predictable, on-chain pricing at any scale.',
   },
 ]
 
@@ -59,7 +59,7 @@ export default function SolarPanels() {
   return (
     <section ref={sectionRef} className="section-snap">
       <div className="relative flex items-center justify-center min-h-screen px-8 md:px-16 lg:px-24">
-        {/* Background text — visible before panels appear, then covered */}
+        {/* Background text: visible before panels appear, then covered */}
         <div className="absolute inset-0 z-[1] flex items-center justify-center px-6 sm:px-12 md:px-20 lg:px-28">
           <div className="grid w-full max-w-5xl grid-cols-1 gap-10 sm:grid-cols-3 sm:gap-8 md:gap-14">
             {bgBlurbs.map((blurb) => (

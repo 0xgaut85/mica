@@ -3,8 +3,10 @@ import { gsap } from 'gsap'
 import { PARTNERS } from '../content/partnerOrbitPlaceholders'
 
 const SLOTS = PARTNERS.length
-const RADIUS_PX = 182
-const SQUARE_PX = 72
+/** Orbit radius: larger = more space between logos on the ring */
+const RADIUS_PX = 258
+/** Circular logo diameter */
+const LOGO_PX = 70
 
 const PartnerOrbitCarousel = forwardRef(function PartnerOrbitCarousel(
   { variant = 'light', className = '' },
@@ -48,7 +50,7 @@ const PartnerOrbitCarousel = forwardRef(function PartnerOrbitCarousel(
     }
   }, [])
 
-  const ringSize = RADIUS_PX * 2 + SQUARE_PX + 80
+  const ringSize = RADIUS_PX * 2 + LOGO_PX + 96
 
   return (
     <div
@@ -80,13 +82,15 @@ const PartnerOrbitCarousel = forwardRef(function PartnerOrbitCarousel(
                   className="flex flex-col items-center"
                 >
                   <div
-                    className="flex items-center justify-center overflow-hidden"
-                    style={{ width: SQUARE_PX, height: SQUARE_PX }}
+                    className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full p-1.5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] ring-1 ring-inset ring-black/[0.05] ${
+                      isDark ? 'bg-white/[0.12] ring-white/12' : 'bg-white/90'
+                    }`}
+                    style={{ width: LOGO_PX, height: LOGO_PX }}
                   >
                     <img
                       src={partner.logo}
                       alt={partner.name}
-                      className="block h-full w-full object-contain"
+                      className="block h-full w-full rounded-full object-contain"
                       draggable={false}
                     />
                   </div>

@@ -4,7 +4,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 /**
  * Pins a section and returns a GSAP timeline wired to scroll.
- * Animations are scrubbed continuously — no snap between steps.
+ * Animations are scrubbed continuously; no snap between steps.
  *
  * Usage:
  *   const { timeline, ready } = useSectionTimeline(sectionRef, { steps: 4 })
