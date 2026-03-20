@@ -7,7 +7,7 @@ import { useSectionTimeline } from '../hooks/useSectionTimeline'
 import IntersectionStar from './IntersectionStar'
 
 const sentences = [
-  'Start training models with less energy and more transparency.',
+  'Deploy AI agents on the most efficient energy grid.',
   'One API call is all it takes.',
 ]
 
@@ -151,7 +151,7 @@ export default function CallToAction() {
           </h2>
 
           <p ref={descRef} className="font-mono text-[12px] text-white/65 leading-[1.8] max-w-xl mb-12">
-            mica replaces expensive, GPU-heavy centralized training with a distributed network that routes computation to wherever renewable energy is most abundant.
+            mica replaces expensive, centralized compute with a blockchain-coordinated network that routes AI agent workloads to the cheapest energy — verified on-chain, settled in seconds.
           </p>
 
           <div className="flex flex-wrap gap-4">

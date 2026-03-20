@@ -17,9 +17,6 @@ const PartnerOrbitCarousel = forwardRef(function PartnerOrbitCarousel(
   useImperativeHandle(ref, () => wrapperRef.current)
 
   const isDark = variant === 'dark'
-  const squareBorder = isDark
-    ? 'border border-white/40 bg-white/[0.07] shadow-[0_0_0_1px_rgba(255,255,255,0.06)_inset]'
-    : 'border border-gray-300/90 bg-white/90 shadow-sm'
 
   useEffect(() => {
     const spinner = spinnerRef.current
@@ -83,7 +80,7 @@ const PartnerOrbitCarousel = forwardRef(function PartnerOrbitCarousel(
                   className="flex flex-col items-center"
                 >
                   <div
-                    className={`flex ${squareBorder} items-center justify-center overflow-hidden rounded-lg p-2`}
+                    className="flex items-center justify-center overflow-hidden"
                     style={{ width: SQUARE_PX, height: SQUARE_PX }}
                   >
                     <img

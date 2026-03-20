@@ -177,7 +177,7 @@ export default function Footer() {
           <div ref={brandRef}>
             <img ref={logoImgRef} src="/ourlogo.png" alt="mica" className="h-40 md:h-56 lg:h-72 w-auto mb-6" />
             <p className="font-display font-extralight text-3xl md:text-4xl lg:text-5xl text-gray-700 leading-[1.3] max-w-3xl">
-              Distributed energy-aware infrastructure for training AI models responsibly.
+              Decentralized energy protocol for AI compute — verified on-chain.
             </p>
             <a
               href="mailto:contact@mica.energy"

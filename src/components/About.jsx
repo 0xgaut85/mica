@@ -6,16 +6,16 @@ import { useSectionTimeline } from '../hooks/useSectionTimeline'
 import IntersectionStar from './IntersectionStar'
 
 const stats = [
-  { value: '47%', numeric: 47, prefix: '', suffix: '%', label: 'Reduction in energy per training cycle' },
-  { value: '100%', numeric: 100, prefix: '', suffix: '%', label: 'Data attribution and model lineage tracking' },
+  { value: '47%', numeric: 47, prefix: '', suffix: '%', label: 'Reduction in compute cost per cycle' },
+  { value: '100%', numeric: 100, prefix: '', suffix: '%', label: 'On-chain attribution and job verification' },
   { value: '12ms', numeric: 12, prefix: '', suffix: 'ms', label: 'Median API response latency' },
 ]
 
 const archLayers = [
-  { name: 'API layer', desc: 'REST endpoints, job submission, model checkpoints' },
-  { name: 'Control plane', desc: 'Scheduling, node selection, energy constraints' },
-  { name: 'Execution', desc: 'GPU, edge, and cloud nodes with sparse updates and energy enforcement' },
-  { name: 'Verification', desc: 'Quality evaluation, data attribution, model lineage' },
+  { name: 'API layer', desc: 'REST endpoints, job submission, agent orchestration' },
+  { name: 'Protocol layer', desc: 'Smart-contract scheduling, energy-price oracles, node staking' },
+  { name: 'Execution', desc: 'GPU, edge, and cloud nodes with verifiable compute proofs' },
+  { name: 'Verification', desc: 'On-chain settlement, data attribution, tokenized credits' },
 ]
 
 export default function About() {
@@ -178,9 +178,9 @@ export default function About() {
   }, [ready, timeline])
 
   const headingLines = [
-    { text: 'Train AI models across a', className: '' },
-    { text: 'global network of compute,', className: 'text-red-mica' },
-    { text: 'using half the energy.', className: '' },
+    { text: 'Run AI agents across a', className: '' },
+    { text: 'decentralized compute network,', className: 'text-red-mica' },
+    { text: 'at half the cost.', className: '' },
   ]
 
   return (
@@ -214,10 +214,11 @@ export default function About() {
               ))}
             </h2>
             <p ref={paragraphRef} className="font-mono text-[13px] text-gray-700 leading-[1.8] max-w-lg">
-              mica abstracts a global network of heterogeneous compute resources,
-              including GPUs, edge devices, and on-prem clusters, then schedules
-              training jobs to minimize energy consumption while maintaining
-              model quality. Pure infrastructure, zero overhead.
+              mica is a decentralized protocol that coordinates AI workloads —
+              agent swarms, inference, fine-tuning — across a global mesh of
+              compute nodes. Smart contracts handle scheduling, energy-price
+              oracles find the cheapest power, and every job is settled on-chain.
+              Pure infrastructure, zero trust assumptions.
             </p>
           </div>
 
@@ -225,18 +226,18 @@ export default function About() {
             <div className="clip-corner-tl aspect-[4/5] min-h-[320px] text-white depth-shadow noise-overlay-dark relative overflow-hidden border-dashed-gray" style={{ backgroundColor: '#060606' }}>
               <img
                 src="/electrictower.jpeg"
-                alt="Power transmission tower, energy infrastructure"
+                alt="Energy infrastructure powering decentralized compute"
                 className="absolute inset-0 w-full h-full object-cover"
                 onError={(e) => { e.target.src = '/about-energy.jpg'; e.target.className = 'absolute inset-0 w-full h-full object-cover opacity-20' }}
               />
               <div className="absolute inset-0 bg-black/50" />
               <div className="relative z-10 p-8 md:p-10 h-full flex flex-col justify-end">
-                <p className="font-display font-light text-base mb-4">Energy-first design</p>
+                <p className="font-display font-light text-base mb-4">Protocol-first design</p>
                 <p className="font-mono text-[11px] leading-[1.8] opacity-90">
-                  Every job runs under an energy budget. Nodes are scored by
-                  improvement-per-watt, not raw throughput. Sparse gradient
-                  updates reduce network and memory load. mica routes computation
-                  to regions with surplus renewable energy.
+                  Every job is verified on-chain. Nodes stake tokens and earn
+                  rewards for compute delivered. Energy-price oracles route work
+                  to the cheapest available power. No middlemen, no opaque
+                  billing — just verifiable, cost-optimized execution.
                 </p>
               </div>
             </div>

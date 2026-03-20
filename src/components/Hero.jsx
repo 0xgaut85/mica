@@ -7,9 +7,9 @@ import { useSectionTimeline } from '../hooks/useSectionTimeline'
 import IntersectionStar from './IntersectionStar'
 
 const statsData = [
-  { val: '50%', label: 'Average energy reduction per training run' },
-  { val: '1', label: 'Single API call to start training' },
-  { val: '100%', label: 'Open standard REST endpoints' },
+  { val: '50%', label: 'Average reduction in compute energy costs' },
+  { val: '1', label: 'Single API call to deploy' },
+  { val: '100%', label: 'On-chain verified workloads' },
 ]
 
 export default function Hero() {
@@ -188,7 +188,7 @@ export default function Hero() {
             <div ref={labelRowRef} className="flex flex-wrap items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
               <span ref={redLineRef} className="w-2.5 h-2.5 bg-red-mica" />
               <p ref={labelTextRef} className="font-mono text-[10px] tracking-[0.3em] text-gray-500">
-                Distributed energy-aware infrastructure for AI training
+                Decentralized energy protocol for AI compute
               </p>
             </div>
 
@@ -199,7 +199,7 @@ export default function Hero() {
             </div>
 
             <p ref={taglineRef} className="font-mono text-sm md:text-base mt-10 max-w-xl text-gray-700 leading-relaxed">
-              Infrastructure that distributes AI training across renewable energy sources, reducing consumption by half while maintaining full model quality.
+              A blockchain-coordinated network that routes AI agent workloads to the cheapest, cleanest energy — cutting compute costs by half with full on-chain transparency.
             </p>
 
             <div className="flex flex-wrap gap-4 sm:gap-5 mt-12 sm:mt-14">

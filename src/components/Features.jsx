@@ -10,8 +10,8 @@ import PartnerOrbitCarousel from './PartnerOrbitCarousel'
 
 const features = [
   {
-    title: 'Energy-aware training',
-    desc: 'Jobs run under explicit kWh budgets. Nodes are ranked by improvement-per-watt. Sparse gradient updates minimize network and memory load.',
+    title: 'On-chain energy routing',
+    desc: 'Smart contracts match AI workloads to the cheapest available energy in real time. Price oracles feed live grid data so every job runs at optimal cost.',
     corner: 'clip-corner-tr',
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -20,8 +20,8 @@ const features = [
     ),
   },
   {
-    title: 'Distributed coordination',
-    desc: 'Training tasks split across heterogeneous nodes, including GPU clouds, edge devices, and on-prem clusters, with deterministic evaluation and reproducible validation.',
+    title: 'Decentralized coordination',
+    desc: 'Agent swarms and inference tasks split across a global mesh of GPU, edge, and cloud nodes. Verifiable compute proofs ensure every cycle is accounted for.',
     corner: 'clip-corner-bl',
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -31,8 +31,8 @@ const features = [
     ),
   },
   {
-    title: 'Data attribution',
-    desc: 'Every dataset contribution is tracked and measured. Loss improvement, accuracy gains, and transparent valuation that incentivizes high-quality training data.',
+    title: 'Tokenized attribution',
+    desc: 'Every data contribution and compute job is recorded on-chain. Contributors earn tokenized credits proportional to the value they add to the network.',
     corner: 'clip-corner-both',
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -44,7 +44,7 @@ const features = [
   },
   {
     title: 'Standard REST APIs',
-    desc: 'POST /train with your model, dataset, and energy budget. Get back a checkpoint, energy report, and contribution metrics. Simple integration, no complexity.',
+    desc: 'POST /deploy with your agent, model, and cost ceiling. Get back a job receipt, on-chain proof, and energy-cost breakdown. One call to the entire network.',
     corner: 'clip-corner-tl',
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -249,7 +249,7 @@ export default function Features() {
           <div>
             <div ref={featuresOrbitRef} className="mb-10 lg:mb-14">
               <p className="mb-8 font-display font-extralight text-2xl md:text-3xl lg:text-4xl text-gray-700 text-center lg:text-left">
-                Collaborating with energy leaders
+                Backed by industry leaders
               </p>
               <div className="flex justify-center">
                 <PartnerOrbitCarousel variant="light" />
@@ -264,12 +264,12 @@ export default function Features() {
             <h2 ref={headingWrapperRef} className="font-display font-extralight text-5xl md:text-7xl lg:text-[5.5rem] leading-[1.08] max-w-4xl">
               <span className="block overflow-hidden">
                 <span ref={heading1Ref} className="block">
-                  Four mechanisms that eliminate
+                  Four primitives that eliminate
                 </span>
               </span>
               <span className="block overflow-hidden">
                 <span ref={heading2Ref} className="block text-red-mica">
-                  complexity from distributed AI training
+                  friction from decentralized AI compute
                 </span>
               </span>
             </h2>
@@ -308,18 +308,18 @@ export default function Features() {
               API preview
             </p>
             <pre className="font-mono text-[12px] text-gray-600 leading-[1.9] overflow-x-auto">
-              <code>{`POST /train
+              <code>{`POST /deploy
 {
-  "model": "llama-7b",
-  "dataset": "customer_support_logs",
-  "objective": "reduce_hallucinations",
-  "energy_budget_kwh": 500
+  "agent": "support-swarm-v3",
+  "model": "llama-70b",
+  "max_cost_usd": 12.00,
+  "priority": "cost_optimized"
 }`}</code>
             </pre>
             <div className="flex items-center gap-3 mt-6 border-dashed-t-dark pt-5">
               <span className="w-2 h-2 rounded-full bg-red-mica" />
               <p className="font-mono text-[10px] text-gray-600">
-                Returns trained checkpoint, energy report, and dataset contribution metrics
+                Returns job receipt, on-chain proof, energy-cost breakdown, and node attestations
               </p>
             </div>
           </div>

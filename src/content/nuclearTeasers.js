@@ -1,12 +1,12 @@
 /**
- * Nuclear section copy — tied to mica's product (distributed energy-aware AI training).
- * Angle: why baseload nuclear matters for long training runs in mica's network.
+ * Nuclear section copy — tied to mica's protocol (decentralized energy-aware AI compute).
+ * Angle: why always-on baseload infrastructure matters for continuous AI agent workloads.
  */
 
-export const NUCLEAR_LEFT_LABEL = 'Always-on capacity'
+export const NUCLEAR_LEFT_LABEL = 'Always-on infrastructure'
 export const NUCLEAR_LEFT_TEASER =
-  'Long training runs need power that never dips. Nuclear plants deliver steady, carbon-free megawatts around the clock — the backbone mica routes to when solar and wind fluctuate.'
+  'AI agent swarms run around the clock. mica\'s protocol routes continuous workloads to baseload energy providers — guaranteeing uptime without spot-market volatility or carbon spikes.'
 
-export const NUCLEAR_RIGHT_LABEL = 'Lower cost per cycle'
+export const NUCLEAR_RIGHT_LABEL = 'Predictable unit economics'
 export const NUCLEAR_RIGHT_TEASER =
-  'Baseload nuclear means predictable pricing with no spot-market surprises. mica locks in flat energy rates for multi-day jobs, cutting per-cycle cost while keeping your carbon footprint near zero.'
+  'Smart contracts lock in energy rates before a job starts. No surprise bills, no variable pricing — just flat, verifiable cost per compute cycle settled transparently on-chain.'

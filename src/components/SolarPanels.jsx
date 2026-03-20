@@ -5,15 +5,15 @@ import { useSectionTimeline } from '../hooks/useSectionTimeline'
 const bgBlurbs = [
   {
     heading: 'Agent swarms',
-    body: 'Enterprises deploy thousands of autonomous AI agents around the clock. Each agent reasons, acts, and consumes compute. mica distributes those workloads across energy-efficient nodes, cutting fleet-wide costs by half.',
+    body: 'Enterprises deploy thousands of autonomous AI agents around the clock. mica\'s protocol distributes those workloads across the cheapest available nodes — verified on-chain, cutting fleet-wide costs by half.',
   },
   {
     heading: 'Local inference',
-    body: 'Developers and builders run open-weight LLMs on their own hardware — fine-tuning, testing, iterating. mica routes the heavy passes to renewable-powered clusters so your local GPU stays cool and your electricity bill stays low.',
+    body: 'Developers run open-weight LLMs and agent stacks on their own hardware. When jobs outgrow local capacity, mica offloads heavy compute to the network — same API, no vendor lock-in, tokenized billing.',
   },
   {
     heading: 'Scale without the bill',
-    body: 'Every token generated has an energy cost. As agent swarms scale from dozens to millions of daily calls, infrastructure spend explodes. mica locks in flat energy rates and eliminates idle-node waste — predictable pricing at any scale.',
+    body: 'Every token generated has an energy cost. As agent swarms scale to millions of daily calls, mica\'s smart contracts lock in flat rates and eliminate idle-node waste — predictable, on-chain pricing at any scale.',
   },
 ]
 
@@ -93,7 +93,7 @@ export default function SolarPanels() {
             <div className="absolute inset-0 w-full h-full">
               <img
                 src="/solarpanel.jpeg"
-                alt="Solar panel array, renewable energy infrastructure"
+                alt="Distributed energy grid powering decentralized compute"
                 className="absolute top-0 left-0 h-full w-[300%] max-w-none object-cover"
                 style={{ transform: 'translateX(calc(-100% / 3))' }}
                 onError={(e) => { e.target.src = '/datacenter.jpeg' }}

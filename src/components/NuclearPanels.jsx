@@ -143,7 +143,7 @@ export default function NuclearPanels() {
             >
               <img
                 src={IMG}
-                alt="Nuclear power station — always-on energy for long training runs"
+                alt="Baseload energy infrastructure — always-on compute backbone"
                 className={imgClass}
                 onError={onErr}
                 draggable={false}
