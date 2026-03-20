@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>16:9 Template</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..400;1,14..32,100..400&family=Instrument+Sans:ital,wght@0,200;0,300;0,400;1,200;1,300;1,400&family=Space+Mono:wght@400&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: #222;
+    }
+
+    .canvas {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      font-family: 'Space Mono', monospace;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .canvas-bg {
+      position: absolute;
+      inset: 0;
+      background: url('jung.jpeg') center/cover no-repeat;
+      z-index: 0;
+    }
+
+    .inner-area {
+      position: absolute;
+      top: 268px;
+      left: 512px;
+      width: 896px;
+      height: 544px;
+      background: url('jung.jpeg') -512px -268px / 1920px 1080px no-repeat;
+      filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      z-index: 2;
+    }
+
+    /* Inner rectangle: 4 dashed lines extending to canvas edges */
+    .line-inner-top {
+      position: absolute;
+      top: 268px;
+      left: 0;
+      width: 100%;
+      height: 0;
+      border-top: 1px dashed #060606;
+      z-index: 10;
+    }
+    .line-inner-bottom {
+      position: absolute;
+      top: 812px;
+      left: 0;
+      width: 100%;
+      height: 0;
+      border-top: 1px dashed #060606;
+      z-index: 10;
+    }
+    .line-inner-left {
+      position: absolute;
+      top: 0;
+      left: 512px;
+      width: 0;
+      height: 100%;
+      border-left: 1px dashed #060606;
+      z-index: 10;
+    }
+    .line-inner-right {
+      position: absolute;
+      top: 0;
+      left: 1408px;
+      width: 0;
+      height: 100%;
+      border-left: 1px dashed #060606;
+      z-index: 10;
+    }
+
+    .line-star {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      transform: translate(-50%, -50%);
+      color: #060606;
+      z-index: 15;
+    }
+    .line-star-tl { top: 268px; left: 512px; }
+    .line-star-tr { top: 268px; left: 1408px; }
+    .line-star-br { top: 812px; left: 1408px; }
+    .line-star-bl { top: 812px; left: 512px; }
+
+    .line-star svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .mica-brand {
+      position: absolute;
+      left: 960px;
+      top: 540px;
+      transform: translate(-50%, -50%);
+      z-index: 10;
+      font-family: 'Inter', sans-serif;
+      font-weight: 100;
+      font-size: 95px;
+      letter-spacing: 0.02em;
+      color: #ffffff;
+      text-decoration: none;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    .mica-brand:hover {
+      color: rgba(255, 255, 255, 0.9);
+    }
+    .btn-cta {
+      position: absolute;
+      bottom: 48px;
+      left: 48px;
+      z-index: 10;
+      font-family: 'Inter', sans-serif;
+      font-weight: 100;
+      font-size: 104px;
+      font-style: italic;
+      color: #ffffff;
+      letter-spacing: 0.02em;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    .logo-tr {
+      position: absolute;
+      top: 0;
+      left: 1408px;
+      width: 512px;
+      height: 268px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+    .logo-tr img {
+      max-width: 400px;
+      max-height: 360px;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+    }
+    .btn-cta::after {
+      content: '';
+      display: inline-block;
+      width: 0.12em;
+      height: 0.12em;
+      min-width: 12px;
+      min-height: 12px;
+      background: #FF0032;
+      margin-left: 0.06em;
+      vertical-align: baseline;
+    }
+  </style>
+</head>
+<body>
+  <div class="canvas">
+    <div class="canvas-bg"></div>
+    <div class="inner-area"></div>
+    <div class="line-inner-top"></div>
+    <div class="line-inner-bottom"></div>
+    <div class="line-inner-left"></div>
+    <div class="line-inner-right"></div>
+    <span class="line-star line-star-tl"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l2.5 7.5L22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5L12 2z" fill="currentColor"/></svg></span>
+    <span class="line-star line-star-tr"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l2.5 7.5L22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5L12 2z" fill="currentColor"/></svg></span>
+    <span class="line-star line-star-br"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l2.5 7.5L22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5L12 2z" fill="currentColor"/></svg></span>
+    <span class="line-star line-star-bl"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l2.5 7.5L22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5L12 2z" fill="currentColor"/></svg></span>
+    <div class="logo-tr">
+      <img src="ourlogo.png" alt="Mica">
+    </div>
+    <a href="https://mica.energy" target="_blank" rel="noopener" class="mica-brand">mica.energy</a>
+    <span class="btn-cta">Discover mica solutions now</span>
+  </div>
+</body>
+</html>

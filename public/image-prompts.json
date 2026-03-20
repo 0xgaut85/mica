@@ -1,0 +1,196 @@
+{
+  "hero_image": {
+    "file": "hero-hydraulic.jpg",
+    "placement": "Generate this first. Use for image-to-video (hydraulic barrage). Output becomes videoserver.mp4",
+    "prompt": {
+      "instruction": "Generate a single standalone image. No template. This will be animated to video.",
+      "aspect_ratio": "16:9",
+      "subject": "A massive concrete dam spillway releasing a wall of water. The spillway stretches toward a vanishing point. Mist and spray fill the air.",
+      "camera": "Low angle, 24mm anamorphic, looking up at the water cascade",
+      "scene": "Concrete spillway, massive water release, mist and spray, sun just above the horizon behind the water",
+      "lighting": "Golden hour, volumetric god rays through the mist, cool steel blue water against warm amber sky",
+      "cinematography": {
+        "color": "cinematic, cool steel blue and warm amber, slightly desaturated",
+        "film_grain": "visible 35mm grain",
+        "lens_effects": "BOLD anamorphic lens flare from sun, crisp hexagonal bokeh, same style as X banner images",
+        "sharpness": "8K crisp, tack-sharp focus, pristine clarity, razor-sharp edges",
+        "mood": "vast, industrial, raw power, energy infrastructure"
+      },
+      "note": "Frame has strong depth and vanishing point—ideal for image-to-video forward motion"
+    }
+  },
+  "hero_video": {
+    "file": "videoserver.mp4",
+    "placement": "Hero section, top-right block, 35vw x 45vh, clip-corner-bl",
+    "source": "Animate hero_image with Kling 3 image-to-video",
+    "kling3_prompt": "Steady linear pan left. The camera drifts left at constant speed, smooth and mechanical. Gentle push-in, subtle zoom in. The hydraulic barrage and water remain anchored; only the frame moves. Cinematic, no shake, no jitter. Shot on 35mm anamorphic.",
+    "negative_prompt": "shaky, jittery, floating, sliding, morphing, warp"
+  },
+  "about_hero": {
+    "file": "about-hero.jpg",
+    "placement": "About section, full-width 16:9 between statement and architecture stack",
+    "prompt": {
+      "instruction": "Generate a single standalone image. No template. Realistic, no buildings.",
+      "aspect_ratio": "16:9",
+      "subject": "Close-up of a real solar farm. Rows of photovoltaic panels stretch diagonally across the frame. Glass reflections catch the light on each panel.",
+      "camera": "Low angle tracking along the array, 35mm lens, shallow depth of field on foreground panels",
+      "scene": "Concrete footings, cables, dust on the glass surface. Arid landscape in the background.",
+      "lighting": "Golden hour, sun low on the horizon behind the panels",
+      "cinematography": {
+        "color": "cinematic, warm amber and steel, realistic, desaturated",
+        "film_grain": "visible 35mm grain",
+        "lens_effects": "BOLD anamorphic lens flare from sun, crisp hexagonal bokeh, same style as X banner images",
+        "sharpness": "8K crisp, tack-sharp, ultra detail, pristine clarity",
+        "mood": "dynamic, corporate, sustainable, documentary realism"
+      },
+      "negative": "blue building, glowing cube, data center, fake structures, CGI, cartoon"
+    }
+  },
+  "about_energy": {
+    "file": "about-energy.jpg",
+    "placement": "Energy-first card, background at 20% opacity, dark overlay",
+    "prompt": {
+      "instruction": "Generate a single standalone image. Realistic only. Will be used as subtle background (low opacity).",
+      "aspect_ratio": "4:5",
+      "subject": "A close-up of steel lattice power transmission towers. Three high-voltage cables run diagonally across the frame. The towers are weathered, rust on the metal, concrete bases visible at the base.",
+      "camera": "Close-up, shallow depth of field, foreground tower sharp, background slightly soft",
+      "scene": "Overcast sky, soft natural light. Sun breaks through a gap in the clouds creating a crisp lens flare in the upper third.",
+      "lighting": "Overcast, natural light, one strong point source for lens flare",
+      "cinematography": {
+        "color": "muted, works when darkened to 20% opacity",
+        "film_grain": "subtle",
+        "lens_effects": "crisp lens flare from sun",
+        "sharpness": "8K crisp, tack-sharp on foreground",
+        "mood": "energy, industrial, documentary realism"
+      },
+      "negative": "control room, monitors, screens, graphs, smart meter, abstract, CGI, glowing, fake"
+    }
+  },
+  "features_heading_option_1_substation": {
+    "file": "features-heading-substation.jpg",
+    "placement": "Features section, beside headline 'Four mechanisms…' (replace video or alternate asset), 16:9, clip-corner-bl",
+    "prompt": {
+      "instruction": "Generate a single standalone image. Realistic only. No template. Documentary, cinematic. Real electrical infrastructure.",
+      "aspect_ratio": "16:9",
+      "subject": "A high-voltage electrical substation in real life. Ceramic insulators, steel gantries, busbars, switchgear, gravel yard, warning signs. Weathered metal, oil stains, real industrial wear.",
+      "camera": "Medium-wide shot, slight low angle, 35mm anamorphic. Deep depth of field so foreground insulators and distant structures read clearly. Leading lines from cables and gantries.",
+      "scene": "Overcast daylight or soft sun. No workers required. Chain-link fence, concrete pads, distant transmission lines. Everything physically real and grounded.",
+      "lighting": "Natural daylight, soft shadows. Optional single crisp sun break for one anamorphic lens flare—same family as hero dam and solar prompts.",
+      "cinematography": {
+        "color": "realistic industrial palette—gray steel, off-white ceramic, muted sky. Documentary grading, slightly desaturated. No teal-orange blockbuster look.",
+        "film_grain": "subtle 35mm grain",
+        "lens_effects": "crisp anamorphic flare only if sun visible; otherwise clean glass",
+        "sharpness": "8K crisp, tack-sharp, ultra detail, pristine clarity, razor-sharp edges",
+        "mood": "precision, layered infrastructure, ‘mechanisms’ as real hardware—pairs with copy about eliminating complexity"
+      },
+      "negative": "hologram, HUD, glowing screens, data overlay, sci-fi UI, neon, CGI, cartoon, floating graphs, server room close-up of LEDs, fake structures, oversaturated"
+    }
+  },
+  "features_heading_option_2_fiber_backbone": {
+    "file": "features-heading-fiber.jpg",
+    "placement": "Features section, beside headline 'Four mechanisms…', 16:9, clip-corner-bl",
+    "prompt": {
+      "instruction": "Generate a single standalone image. Realistic only. Documentary. Real telecommunications / fiber backbone—no abstract network graphics.",
+      "aspect_ratio": "16:9",
+      "subject": "Heavy armored fiber-optic cable on large wooden or steel reels at a civil works site, or cables entering a weathered underground vault with conduit and warning markers. Mud, asphalt, real tools, cable markings visible but not readable as fake UI.",
+      "camera": "Close-to-medium shot, 35mm or 50mm, shallow depth of field on cable texture and reel edge, background softly falling off.",
+      "scene": "Daylight, roadside or utility trench context. Orange safety fencing optional. Dust, rubber marks, real-world imperfection.",
+      "lighting": "Natural diffuse light or golden hour sidelight grazing the cable jacket texture.",
+      "cinematography": {
+        "color": "cinematic, warm-neutral and steel, realistic, slightly desaturated—consistent with solar and tower prompts",
+        "film_grain": "visible 35mm grain",
+        "lens_effects": "BOLD anamorphic lens flare from low sun if appropriate, crisp hexagonal bokeh",
+        "sharpness": "8K crisp, tack-sharp on foreground cable and reel",
+        "mood": "distributed connectivity, physical backbone, engineering realism"
+      },
+      "negative": "glowing nodes, world map, digital network, matrix, blue cyber lines, CGI, abstract fiber light trails, server racks with rainbow LEDs, fake"
+    }
+  },
+  "features_heading_option_3_wind_grid": {
+    "file": "features-heading-wind-grid.jpg",
+    "placement": "Features section, beside headline 'Four mechanisms…', 16:9, clip-corner-bl",
+    "prompt": {
+      "instruction": "Generate a single standalone image. Realistic only. Wind energy meeting the grid—same documentary language as solar farm prompt.",
+      "aspect_ratio": "16:9",
+      "subject": "Onshore wind turbines on a real access road or service track, with a high-voltage transmission line and lattice tower in the same frame. Grass, gravel, turbine bases, real scale. Steam or mist optional in distance only if natural weather.",
+      "camera": "Wide shot, low horizon, 24mm or 35mm anamorphic. Turbines and power lines create strong verticals and depth toward the horizon.",
+      "scene": "Windy but believable sky—scudding clouds, not apocalyptic. No people necessary.",
+      "lighting": "Golden hour or soft overcast; volumetric light through clouds if sun breaks—god rays subtle, natural only.",
+      "cinematography": {
+        "color": "cinematic, cool sky and warm land accents, realistic, desaturated",
+        "film_grain": "visible 35mm grain",
+        "lens_effects": "BOLD anamorphic lens flare from sun at edge of frame, crisp hexagonal bokeh, match hero/solar family",
+        "sharpness": "8K crisp, tack-sharp, ultra detail, pristine clarity",
+        "mood": "renewable generation feeding the grid—aligns with mica energy-aware training story"
+      },
+      "negative": "floating turbines, fake turbines, CGI, oversaturated, apocalyptic storm, lightning, destruction, neon, hologram, cartoon"
+    }
+  },
+  "features_hero": {
+    "file": "features-hero.jpg",
+    "placement": "Features section, 16:9 hero between heading and cards",
+    "prompt": {
+      "instruction": "Generate a single standalone image. Realistic only. No template. Documentary, cinematic.",
+      "aspect_ratio": "16:9",
+      "subject": "A nuclear power station. Massive concrete cooling towers with steam rising into the sky. Or: reactor containment building, turbine hall exterior, industrial scale. Real infrastructure—concrete, steel, pipes, power lines.",
+      "camera": "Wide establishing shot, low angle looking up at the towers, 35mm anamorphic. Deep depth of field. Vanishing point through the structure.",
+      "scene": "Overcast or soft daylight. Steam plumes, cooling water vapor. Gravel, fencing, transmission lines. No people needed—the scale speaks.",
+      "lighting": "Natural daylight, overcast or soft sun. Realistic shadows. One crisp lens flare if sun breaks through clouds.",
+      "cinematography": {
+        "color": "realistic, natural palette—concrete gray, steel, sky blue, steam white. No teal/orange push. Documentary color grading, slightly muted.",
+        "film_grain": "subtle 35mm grain",
+        "lens_effects": "crisp anamorphic lens flare if sun visible, otherwise clean",
+        "sharpness": "8K crisp, tack-sharp, ultra detail, pristine clarity, razor-sharp edges",
+        "mood": "vast, industrial, documentary realism, crisp cinematic"
+      },
+      "negative": "hologram, neon, glowing, fake, CGI, apocalyptic, destruction, cartoon, oversaturated, teal-orange"
+    }
+  },
+  "cta_bg": {
+    "file": "cta-bg.jpg",
+    "placement": "CTA section, full-bleed background, blurred, 30% opacity",
+    "prompt": {
+      "instruction": "Generate a single standalone image. Realistic only. Will be used as blurred background behind dark overlay.",
+      "aspect_ratio": "16:9",
+      "subject": "A low industrial building at blue hour. Concrete and steel construction. Warm amber light spills from a single large door in the center of the frame.",
+      "camera": "Wide establishing shot, documentary style",
+      "scene": "The building sits in an empty lot, gravel ground. Overcast sky, dusk.",
+      "lighting": "Blue hour, overcast sky, warm interior light from the door creating a subtle lens flare",
+      "cinematography": {
+        "color": "muted, cool tones, one warm accent, will show through dark overlay",
+        "film_grain": "subtle",
+        "lens_effects": "crisp lens flare from one light source",
+        "sharpness": "8K crisp in source (blur applied in CSS)",
+        "mood": "inviting, professional, documentary realism"
+      },
+      "negative": "sleek, neon, cool blue lights, CGI, fake, glowing"
+    }
+  },
+  "amazonian_forest": {
+    "file": "amazonian-forest.jpg",
+    "placement": "16:9 template (template-16x9.html), full background",
+    "prompt": {
+      "instruction": "Generate a single standalone image. Realistic only. No template. Documentary, cinematic. Drone/aerial view of Amazon rainforest with energy infrastructure.",
+      "aspect_ratio": "16:9",
+      "subject": "Drone aerial view of Amazonian rainforest. Dense canopy stretches to the horizon. A wide river cuts through the frame—the same water that feeds hydroelectric dams. Or: high-voltage transmission towers and power lines cutting through the canopy, carrying energy from Amazon hydro. Or: a reservoir or dam visible in the distance, forest meeting water. The connection: this landscape powers the grid.",
+      "camera": "Drone POV, high altitude, looking down at 30–45 degrees. 24mm equivalent. Deep depth of field. River or power corridor creates strong leading lines. Vast scale—canopy as a textured carpet.",
+      "scene": "Primary forest, river visible. Transmission lines or dam structure in frame (subtle, not dominant). Mist over the canopy. No people. Real infrastructure—towers, cables, or concrete—grounded in the landscape.",
+      "lighting": "Golden hour or soft overcast. Sun low, long shadows across the canopy. Volumetric light through mist. One crisp lens flare if sun at edge of frame.",
+      "cinematography": {
+        "color": "cinematic, deep greens, steel-gray towers or concrete if present, warm amber sky, slightly desaturated, documentary grading",
+        "film_grain": "visible 35mm grain",
+        "lens_effects": "BOLD anamorphic lens flare from sun if visible, crisp hexagonal bokeh, same style as X banner images",
+        "sharpness": "8K crisp, tack-sharp focus, ultra detail, pristine clarity, razor-sharp edges",
+        "mood": "vast, primordial, energy meets nature, documentary realism, Planet Earth meets infrastructure"
+      },
+      "negative": "hologram, neon, glowing, CGI, cartoon, oversaturated, fake plants, plastic look, people, buildings, deforestation, logging, no energy connection"
+    }
+  },
+  "_style_reference": {
+    "crisp": "8K crisp, tack-sharp focus, ultra detail, pristine clarity, razor-sharp edges",
+    "lens_flare": "BOLD anamorphic lens flare, crisp hexagonal bokeh, same style as X banner images",
+    "film_grain": "visible 35mm grain for hero images",
+    "mood": "corporate, neo-minimalist, not web3",
+    "rule": "Realistic only. No abstract, no control rooms, no glowing screens, no fake structures, no CGI look. Documentary realism."
+  }
+}

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mica X Banner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
+
+  .banner {
+    width: 1500px;
+    height: 500px;
+    overflow: hidden;
+    position: relative;
+    background: #FFFFFF;
+  }
+
+  /* Full composed image as background */
+  .banner-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: url('xbanner.jpg') center/cover no-repeat;
+  }
+
+  /* Soft radial blur on the background edges to focus attention on center */
+  .blur-vignette {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    backdrop-filter: blur(0px);
+    mask-image: radial-gradient(ellipse 55% 70% at 50% 50%, transparent 60%, black 100%);
+    -webkit-mask-image: radial-gradient(ellipse 55% 70% at 50% 50%, transparent 60%, black 100%);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+
+  /* Gloss sheen on small square (dam) */
+  .gloss-small {
+    position: absolute;
+    z-index: 3;
+    bottom: 50px;
+    left: 520px;
+    width: 220px;
+    height: 220px;
+    clip-path: polygon(
+      0 0,
+      calc(100% - 24px) 0,
+      100% 24px,
+      100% 100%,
+      24px 100%,
+      0 calc(100% - 24px)
+    );
+    background: linear-gradient(
+      135deg,
+      rgba(255,255,255,0.18) 0%,
+      rgba(255,255,255,0.04) 40%,
+      transparent 60%,
+      rgba(255,255,255,0.02) 100%
+    );
+    pointer-events: none;
+  }
+
+  /* Gloss sheen on large square (wind) */
+  .gloss-large {
+    position: absolute;
+    z-index: 4;
+    bottom: 30px;
+    left: 720px;
+    width: 280px;
+    height: 280px;
+    clip-path: polygon(
+      0 0,
+      calc(100% - 28px) 0,
+      100% 28px,
+      100% 100%,
+      28px 100%,
+      0 calc(100% - 28px)
+    );
+    background: linear-gradient(
+      135deg,
+      rgba(255,255,255,0.18) 0%,
+      rgba(255,255,255,0.04) 40%,
+      transparent 60%,
+      rgba(255,255,255,0.02) 100%
+    );
+    pointer-events: none;
+  }
+
+  /* Gloss sheen on top rectangle (solar) */
+  .gloss-top {
+    position: absolute;
+    z-index: 5;
+    top: 50px;
+    left: 490px;
+    width: 520px;
+    height: 190px;
+    clip-path: polygon(
+      0 0,
+      calc(100% - 26px) 0,
+      100% 26px,
+      100% 100%,
+      26px 100%,
+      0 calc(100% - 26px)
+    );
+    background: linear-gradient(
+      135deg,
+      rgba(255,255,255,0.2) 0%,
+      rgba(255,255,255,0.05) 35%,
+      transparent 55%,
+      rgba(255,255,255,0.02) 100%
+    );
+    pointer-events: none;
+  }
+
+  /* Grain texture */
+  .grain {
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+    opacity: 0.1;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.5' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grain)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 100px 100px;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+
+  .url {
+    position: absolute;
+    z-index: 7;
+    bottom: 20px;
+    right: 28px;
+    font-family: 'Space Mono', monospace;
+    font-size: 22px;
+    color: #060606;
+    letter-spacing: 0.08em;
+  }
+</style>
+</head>
+<body>
+
+  <div class="banner">
+    <div class="banner-bg"></div>
+    <div class="blur-vignette"></div>
+    <div class="gloss-small"></div>
+    <div class="gloss-large"></div>
+    <div class="gloss-top"></div>
+    <div class="grain"></div>
+    <span class="url">mica<span style="color: #FF0032;">.</span>energy</span>
+  </div>
+
+</body>
+</html>
