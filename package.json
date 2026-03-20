@@ -6,19 +6,20 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "start": "serve dist -s -l tcp://0.0.0.0:${PORT:-3000}",
     "preview": "vite preview"
   },
   "dependencies": {
     "framer-motion": "^11.11.17",
     "gsap": "^3.12.5",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "serve": "^14.2.6"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.3",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.49",
-    "puppeteer": "^24.39.1",
     "tailwindcss": "^3.4.15",
     "vite": "^5.4.10"
   }
