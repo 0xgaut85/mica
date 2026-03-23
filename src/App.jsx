@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import ScrollToTop from './components/ScrollToTop'
 import VerticalNav from './components/VerticalNav'
 import MobileDock from './components/MobileDock'
 import ConsentGate from './components/ConsentGate'
@@ -9,6 +10,7 @@ import { LegalDocsProvider } from './context/LegalDocsContext'
 export default function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <LegalDocsProvider>
         <ConsentGate>
           <div className="relative min-h-screen">
