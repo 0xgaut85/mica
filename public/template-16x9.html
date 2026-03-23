@@ -31,7 +31,7 @@
     .canvas-bg {
       position: absolute;
       inset: 0;
-      background: url('jung.jpeg') center/cover no-repeat;
+      background: url('brain.jpeg') center/cover no-repeat;
       z-index: 0;
     }
 
@@ -41,7 +41,7 @@
       left: 512px;
       width: 896px;
       height: 544px;
-      background: url('jung.jpeg') -512px -268px / 1920px 1080px no-repeat;
+      background: url('brain.jpeg') -512px -268px / 1920px 1080px no-repeat;
       filter: blur(8px);
       border: 1px solid rgba(255, 255, 255, 0.25);
       z-index: 2;
@@ -112,7 +112,7 @@
       z-index: 10;
       font-family: 'Inter', sans-serif;
       font-weight: 100;
-      font-size: 95px;
+      font-size: 72px;
       letter-spacing: 0.02em;
       color: #ffffff;
       text-decoration: none;
@@ -136,6 +136,16 @@
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
+    .btn-cta-accent {
+      display: inline-block;
+      width: 0.12em;
+      height: 0.12em;
+      min-width: 12px;
+      min-height: 12px;
+      margin-left: 0.06em;
+      vertical-align: baseline;
+      background: #FF0032;
+    }
     .logo-tr {
       position: absolute;
       top: 0;
@@ -154,17 +164,6 @@
       height: auto;
       object-fit: contain;
     }
-    .btn-cta::after {
-      content: '';
-      display: inline-block;
-      width: 0.12em;
-      height: 0.12em;
-      min-width: 12px;
-      min-height: 12px;
-      background: #FF0032;
-      margin-left: 0.06em;
-      vertical-align: baseline;
-    }
   </style>
 </head>
 <body>
@@ -182,8 +181,8 @@
     <div class="logo-tr">
       <img src="ourlogo.png" alt="Mica">
     </div>
-    <a href="https://mica.energy" target="_blank" rel="noopener" class="mica-brand">mica.energy</a>
-    <span class="btn-cta">Discover mica solutions now</span>
+    <a href="https://mica.energy/careers" target="_blank" rel="noopener" class="mica-brand">mica.energy/careers</a>
+    <span class="btn-cta">mica is hiring<span class="btn-cta-accent" aria-hidden="true"></span></span>
   </div>
 </body>
 </html>

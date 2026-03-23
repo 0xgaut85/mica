@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
@@ -50,9 +50,25 @@ export function useSectionTimeline(sectionRef, {
 
     return () => {
       ctx.current?.revert()
+      ctx.current = null
       readyRef.current = false
     }
   }, [sectionRef, steps, pxPerStep, start, scrub])
+
+  // Unmount cleanup in useLayoutEffect: runs BEFORE React removes DOM elements.
+  // GSAP's pin-spacer wrappers are DOM-level (invisible to React). If we only
+  // revert in useEffect (after DOM removal), React removes pinned children but
+  // leaves empty pin-spacer divs with large explicit heights — pushing the next
+  // page's content below the viewport ("blank page until refresh").
+  useLayoutEffect(() => {
+    return () => {
+      if (ctx.current) {
+        ctx.current.revert()
+        ctx.current = null
+        readyRef.current = false
+      }
+    }
+  }, [])
 
   return { timeline, ready: readyRef }
 }

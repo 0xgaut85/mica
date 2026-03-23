@@ -115,7 +115,8 @@ export default function Hero() {
     statItemsRef.current.forEach((el, i) => {
       if (el) gsap.set(el, { opacity: 0, y: 20 + i * 8 })
     })
-    gsap.set(cornerRef.current, { opacity: 0, scale: 0.4 })
+    // Corner bracket: visible on load (top-left); not tied to scroll so it always reads
+    gsap.set(cornerRef.current, { opacity: 1, scale: 1 })
 
     // Step 1: H-line draws left → right
     tl.addLabel('hline')
@@ -129,7 +130,6 @@ export default function Hero() {
     tl.addLabel('star')
       .to(starRef.current, { scale: 1, opacity: 1, duration: 0.5, ease: 'back.out(3)' })
       .to(mediaRef.current, { x: '0%', scale: 1, duration: 1, ease: 'expo.out' }, '<0.2')
-      .to(cornerRef.current, { opacity: 1, scale: 1, duration: 0.4 }, '<0.5')
 
     // Step 4: label row reveal (title "mica" already visible)
     tl.addLabel('title')
@@ -242,7 +242,12 @@ export default function Hero() {
         </div>
       </div>
 
-      <div ref={cornerRef} className="hidden sm:block absolute bottom-6 sm:bottom-8 left-4 sm:left-8 md:left-[96px] corner-mark w-12 h-12 sm:w-16 sm:h-16" />
+      {/* Dashed corner frame — top-left of hero (clears fixed nav on md+) */}
+      <div
+        ref={cornerRef}
+        className="pointer-events-none absolute top-6 left-4 z-[16] sm:top-8 sm:left-8 md:top-10 md:left-[96px] corner-mark h-10 w-10 sm:h-14 sm:w-14"
+        aria-hidden
+      />
     </section>
   )
 }

@@ -186,6 +186,15 @@
       "negative": "hologram, neon, glowing, CGI, cartoon, oversaturated, fake plants, plastic look, people, buildings, deforestation, logging, no energy connection"
     }
   },
+  "modern_us_office": {
+    "file": "office-modern-us.jpg",
+    "placement": "16:9 background for template-16x9.html; realistic interior",
+    "prompt": {
+      "aspect_ratio": "16:9",
+      "prompt": "Shot from outside through a glass door looking into a small startup office late at night. Two dark silhouettes of men stand at a whiteboard covered in scribbled diagrams. The glass reflects faint streetlight. Inside the room a single warm lamp lights the whiteboard and casts long shadows across a messy desk with coffee cups and papers. The men are seen from behind through the glass, just shapes and posture, no visible faces. Outside is dark and quiet. Shot on Cinestill 800T, 35mm film, heavy tungsten halation around the lamp through the glass, deep grain, shallow focus on the glass surface so the figures are slightly soft. The feeling of glimpsing something private and obsessive. Street photography aesthetic, not staged.",
+      "negative": "daylight, bright, sunny, faces visible, looking at camera, close-up portrait, CGI, 3D render, illustration, cartoon, stock photo, posed, smiling, neon, corporate office, suits, clean, pristine, HDR, oversaturated, sharp digital look, more than two people"
+    }
+  },
   "_style_reference": {
     "crisp": "8K crisp, tack-sharp focus, ultra detail, pristine clarity, razor-sharp edges",
     "lens_flare": "BOLD anamorphic lens flare, crisp hexagonal bokeh, same style as X banner images",
