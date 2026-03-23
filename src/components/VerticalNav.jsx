@@ -1,47 +1,53 @@
-import { useState, useCallback } from 'react'
+import { useCallback } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { gsap } from 'gsap'
 
-function NavLink({ label, href, index }) {
-  const [hovered, setHovered] = useState(false)
+const SECTIONS = [
+  { label: 'About', hash: 'about' },
+  { label: 'Stack', hash: 'features' },
+  { label: 'Start', hash: 'cta' },
+]
 
-  const handleClick = useCallback((e) => {
-    e.preventDefault()
-    const target = document.querySelector(href)
-    if (target) {
-      gsap.to(window, {
-        duration: 0.95,
-        ease: 'power3.inOut',
-        scrollTo: { y: target, offsetY: -4, autoKill: true },
-      })
-    }
-  }, [href])
+function SectionLink({ label, hash, index }) {
+  const location = useLocation()
+
+  const handleClick = useCallback(
+    (e) => {
+      if (location.pathname !== '/') return
+      e.preventDefault()
+      const target = document.getElementById(hash)
+      if (target) {
+        gsap.to(window, {
+          duration: 0.95,
+          ease: 'power3.inOut',
+          scrollTo: { y: target, offsetY: -4, autoKill: true },
+        })
+      }
+    },
+    [hash, location.pathname],
+  )
 
   return (
-    <motion.a
-      href={href}
-      onClick={handleClick}
-      className="writing-vertical font-mono text-[10px] tracking-[0.2em] cursor-pointer relative group py-2"
-      style={{ color: hovered ? 'var(--red)' : 'var(--black)' }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+    <motion.div
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.8 + index * 0.12, duration: 0.5 }}
-      whileHover={{ x: 3 }}
     >
-      {label}
-      <span className="absolute left-0 bottom-0 h-0 w-[1px] bg-red-mica transition-all duration-300 ease-out group-hover:h-full" />
-    </motion.a>
+      <Link
+        to={`/#${hash}`}
+        onClick={handleClick}
+        className="writing-vertical font-mono text-[10px] tracking-[0.2em] cursor-pointer relative group py-2 text-black hover:text-red-mica transition-colors duration-200 block"
+      >
+        {label}
+        <span className="absolute left-0 bottom-0 h-0 w-[1px] bg-red-mica transition-all duration-300 ease-out group-hover:h-full" />
+      </Link>
+    </motion.div>
   )
 }
 
 export default function VerticalNav() {
-  const links = [
-    { label: 'About', href: '#about' },
-    { label: 'Stack', href: '#features' },
-    { label: 'Start', href: '#cta' },
-  ]
+  const location = useLocation()
 
   return (
     <motion.nav
@@ -50,25 +56,44 @@ export default function VerticalNav() {
       animate={{ x: 0 }}
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
     >
-      <motion.a
-        href="#"
+      <Link
+        to="/"
         className="block focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-mica rounded-sm"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.6 }}
-        whileHover={{ opacity: 0.85 }}
         onClick={(e) => {
-          e.preventDefault()
-          gsap.to(window, { duration: 0.75, ease: 'power2.inOut', scrollTo: { y: 0, autoKill: true } })
+          if (location.pathname === '/') {
+            e.preventDefault()
+            gsap.to(window, { duration: 0.75, ease: 'power2.inOut', scrollTo: { y: 0, autoKill: true } })
+          }
         }}
       >
-        <img src="/ourlogo.png" alt="mica" className="h-20 w-auto" />
-      </motion.a>
+        <motion.img
+          src="/ourlogo.png"
+          alt="mica"
+          className="h-20 w-auto"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6 }}
+          whileHover={{ opacity: 0.85 }}
+        />
+      </Link>
 
       <div className="flex flex-col items-center gap-6">
-        {links.map((link, i) => (
-          <NavLink key={link.label} {...link} index={i} />
+        {SECTIONS.map((link, i) => (
+          <SectionLink key={link.hash} {...link} index={i} />
         ))}
+        <motion.div
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.8 + SECTIONS.length * 0.12, duration: 0.5 }}
+        >
+          <Link
+            to="/careers"
+            className="writing-vertical font-mono text-[10px] tracking-[0.2em] cursor-pointer relative group py-2 text-black hover:text-red-mica transition-colors duration-200 block"
+          >
+            Careers
+            <span className="absolute left-0 bottom-0 h-0 w-[1px] bg-red-mica transition-all duration-300 ease-out group-hover:h-full" />
+          </Link>
+        </motion.div>
       </div>
 
       <motion.a

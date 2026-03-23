@@ -9,7 +9,7 @@ const footerLinks = [
   {
     heading: 'Product',
     links: [
-      { label: 'Features', href: '#features' },
+      { label: 'Features', href: '/#features' },
       { label: 'API docs', href: '#' },
       { label: 'Pricing', href: '#' },
       { label: 'Changelog', href: '#' },
@@ -18,10 +18,10 @@ const footerLinks = [
   {
     heading: 'Company',
     links: [
-      { label: 'About', href: '#about' },
+      { label: 'About', href: '/#about' },
       { label: 'Blog', href: '#' },
-      { label: 'Careers', href: '#' },
-      { label: 'Contact', href: '#' },
+      { label: 'Careers', href: '/careers' },
+      { label: 'Contact', href: '/#contact' },
       { label: 'Terms of Service', legal: 'terms' },
       { label: 'Privacy Policy', legal: 'privacy' },
       { label: 'Acceptable use & conditions', legal: 'conditions' },

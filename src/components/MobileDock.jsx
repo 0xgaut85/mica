@@ -1,23 +1,30 @@
 import { useCallback } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { gsap } from 'gsap'
 
-const links = [
-  { label: 'About', href: '#about' },
-  { label: 'Stack', href: '#features' },
-  { label: 'Start', href: '#cta' },
+const SECTIONS = [
+  { label: 'About', hash: 'about' },
+  { label: 'Stack', hash: 'features' },
+  { label: 'Start', hash: 'cta' },
 ]
 
 export default function MobileDock() {
-  const scrollTo = useCallback((href) => (e) => {
-    e.preventDefault()
-    const target = document.querySelector(href)
-    if (!target) return
-    gsap.to(window, {
-      duration: 0.95,
-      ease: 'power3.inOut',
-      scrollTo: { y: target, offsetY: -8, autoKill: true },
-    })
-  }, [])
+  const location = useLocation()
+
+  const scrollToHash = useCallback(
+    (hash) => (e) => {
+      if (location.pathname !== '/') return
+      e.preventDefault()
+      const target = document.getElementById(hash)
+      if (!target) return
+      gsap.to(window, {
+        duration: 0.95,
+        ease: 'power3.inOut',
+        scrollTo: { y: target, offsetY: -8, autoKill: true },
+      })
+    },
+    [location.pathname],
+  )
 
   return (
     <nav
@@ -26,16 +33,22 @@ export default function MobileDock() {
       aria-label="Section navigation"
     >
       <div className="flex justify-around items-stretch max-w-md mx-auto pt-2.5 px-1">
-        {links.map(({ label, href }) => (
-          <a
-            key={href}
-            href={href}
-            onClick={scrollTo(href)}
+        {SECTIONS.map(({ label, hash }) => (
+          <Link
+            key={hash}
+            to={`/#${hash}`}
+            onClick={scrollToHash(hash)}
             className="flex-1 text-center font-mono text-[9px] tracking-[0.18em] uppercase py-2.5 text-black/70 hover:text-red-mica active:text-red-mica transition-colors duration-200"
           >
             {label}
-          </a>
+          </Link>
         ))}
+        <Link
+          to="/careers"
+          className="flex-1 text-center font-mono text-[9px] tracking-[0.18em] uppercase py-2.5 text-black/70 hover:text-red-mica active:text-red-mica transition-colors duration-200"
+        >
+          Careers
+        </Link>
         <a
           href="https://x.com/micadotenergy"
           target="_blank"
