@@ -10,7 +10,6 @@ import { LegalDocsProvider } from './context/LegalDocsContext'
 export default function App() {
   return (
     <BrowserRouter>
-      <ScrollToTop />
       <LegalDocsProvider>
         <ConsentGate>
           <div className="relative min-h-screen">
@@ -21,6 +20,11 @@ export default function App() {
                 <Route path="/" element={<Landing />} />
                 <Route path="/careers" element={<Careers />} />
               </Routes>
+              {/*
+                Must render after Routes so layout runs after the new page is in the DOM.
+                Previously as the first child of BrowserRouter, scroll ran too early and /careers looked blank until refresh.
+              */}
+              <ScrollToTop />
             </main>
           </div>
         </ConsentGate>
