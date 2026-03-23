@@ -1,12 +1,16 @@
-import { forwardRef, useRef, useEffect, useImperativeHandle } from 'react'
+import { forwardRef, useRef, useEffect, useImperativeHandle, useState, useCallback } from 'react'
 import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { PARTNERS } from '../content/partnerOrbitPlaceholders'
 
 const SLOTS = PARTNERS.length
-/** Orbit radius: larger = more space between logos on the ring */
-const RADIUS_PX = 258
-/** Circular logo diameter */
-const LOGO_PX = 70
+
+function orbitDimsForWidth(w) {
+  if (w < 400) return { r: 92, logo: 42 }
+  if (w < 640) return { r: 172, logo: 58 }
+  if (w < 1024) return { r: 218, logo: 64 }
+  return { r: 258, logo: 70 }
+}
 
 const PartnerOrbitCarousel = forwardRef(function PartnerOrbitCarousel(
   { variant = 'light', className = '' },
@@ -16,9 +20,31 @@ const PartnerOrbitCarousel = forwardRef(function PartnerOrbitCarousel(
   const spinnerRef = useRef(null)
   const slotRefs = useRef([])
 
+  const [dims, setDims] = useState(() =>
+    typeof window !== 'undefined' ? orbitDimsForWidth(window.innerWidth) : { r: 258, logo: 70 },
+  )
+
+  const onResize = useCallback(() => {
+    setDims(orbitDimsForWidth(window.innerWidth))
+  }, [])
+
+  useEffect(() => {
+    onResize()
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [onResize])
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => ScrollTrigger.refresh())
+    return () => cancelAnimationFrame(id)
+  }, [dims])
+
   useImperativeHandle(ref, () => wrapperRef.current)
 
   const isDark = variant === 'dark'
+  const { r: radiusPx, logo: logoPx } = dims
+  const ringPadding = 96
+  const ringSize = radiusPx * 2 + logoPx + ringPadding
 
   useEffect(() => {
     const spinner = spinnerRef.current
@@ -38,9 +64,9 @@ const PartnerOrbitCarousel = forwardRef(function PartnerOrbitCarousel(
       ease: 'none',
       repeat: -1,
       onUpdate() {
-        const r = this.progress() * 360
+        const rot = this.progress() * 360
         slotRefs.current.forEach((el, i) => {
-          if (el) gsap.set(el, { xPercent: -50, yPercent: -50, rotation: -(angles[i] + r) })
+          if (el) gsap.set(el, { xPercent: -50, yPercent: -50, rotation: -(angles[i] + rot) })
         })
       },
     })
@@ -48,17 +74,15 @@ const PartnerOrbitCarousel = forwardRef(function PartnerOrbitCarousel(
     return () => {
       tween.kill()
     }
-  }, [])
-
-  const ringSize = RADIUS_PX * 2 + LOGO_PX + 96
+  }, [radiusPx, logoPx])
 
   return (
     <div
       ref={wrapperRef}
-      className={`transition-transform duration-500 ease-out hover:scale-110 ${className}`}
+      className={`mx-auto max-w-full min-w-0 transition-transform duration-500 ease-out hover:scale-105 sm:hover:scale-110 ${className}`}
     >
       <div
-        className="relative mx-auto"
+        className="relative mx-auto max-w-full"
         style={{ width: ringSize, height: ringSize }}
       >
         <div
@@ -73,7 +97,7 @@ const PartnerOrbitCarousel = forwardRef(function PartnerOrbitCarousel(
                 key={partner.name}
                 className="absolute left-0 top-0"
                 style={{
-                  transform: `rotate(${deg}deg) translateY(-${RADIUS_PX}px)`,
+                  transform: `rotate(${deg}deg) translateY(-${radiusPx}px)`,
                   transformOrigin: '0 0',
                 }}
               >
@@ -85,7 +109,7 @@ const PartnerOrbitCarousel = forwardRef(function PartnerOrbitCarousel(
                     className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full p-1.5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] ring-1 ring-inset ring-black/[0.05] ${
                       isDark ? 'bg-white/[0.12] ring-white/12' : 'bg-white/90'
                     }`}
-                    style={{ width: LOGO_PX, height: LOGO_PX }}
+                    style={{ width: logoPx, height: logoPx }}
                   >
                     <img
                       src={partner.logo}
@@ -95,7 +119,7 @@ const PartnerOrbitCarousel = forwardRef(function PartnerOrbitCarousel(
                     />
                   </div>
                   <span
-                    className={`mt-2 whitespace-nowrap text-center font-sans text-[9px] font-medium tracking-wide leading-none ${isDark ? 'text-white' : 'text-black'}`}
+                    className={`mt-1.5 sm:mt-2 max-w-[5.5rem] sm:max-w-none whitespace-normal sm:whitespace-nowrap text-center font-sans text-[8px] sm:text-[9px] font-medium tracking-wide leading-tight ${isDark ? 'text-white' : 'text-black'}`}
                   >
                     {partner.name}
                   </span>

@@ -254,14 +254,14 @@ export default function Features() {
       <IntersectionStar ref={starRef} className="absolute z-[9] pointer-events-none" />
 
       <div className="px-8 md:px-16 lg:px-24 pt-32 relative z-10">
-        <div ref={headingRowRef} className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(260px,40vw)] gap-10 lg:gap-14 items-end mb-12">
-          <div>
+        <div ref={headingRowRef} className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(260px,40vw)] gap-10 lg:gap-14 items-start lg:items-end mb-12">
+          <div className="min-w-0">
             <div ref={featuresOrbitRef} className="mb-10 lg:mb-14">
-              <p className="mb-8 font-display font-extralight text-2xl md:text-3xl lg:text-4xl text-gray-700 text-center lg:text-left">
-                Backed by industry leaders
+              <p className="mb-6 sm:mb-8 font-display font-extralight text-xl sm:text-2xl md:text-3xl lg:text-4xl text-gray-700 text-center lg:text-left text-balance px-1 sm:px-0 max-w-full">
+                Collaborating with industry leaders
               </p>
-              <div className="flex justify-center">
-                <PartnerOrbitCarousel variant="light" />
+              <div className="flex w-full min-w-0 justify-center overflow-x-auto overflow-y-visible py-2 [scrollbar-width:thin]">
+                <PartnerOrbitCarousel variant="light" className="shrink-0" />
               </div>
             </div>
             <div ref={labelRowRef} className="flex flex-wrap items-center gap-4 sm:gap-5 mb-6">
@@ -310,13 +310,13 @@ export default function Features() {
           ))}
         </div>
 
-        <div ref={apiBlockRef} className="mt-16 border-dashed-gray bg-cream p-8 md:p-10 clip-corner-tr relative noise-overlay">
+        <div ref={apiBlockRef} className="mt-16 border-dashed-gray bg-cream p-6 sm:p-8 md:p-10 clip-corner-tr relative noise-overlay">
           <div className="absolute top-0 right-0 w-full h-full dot-grid-fine opacity-15 pointer-events-none" />
-          <div className="relative z-10">
+          <div className="relative z-10 min-w-0">
             <p className="font-mono text-[10px] tracking-[0.2em] text-gray-500 mb-5">
               API preview
             </p>
-            <pre className="font-mono text-[12px] text-gray-600 leading-[1.9] overflow-x-auto">
+            <pre className="font-mono text-[11px] sm:text-[12px] text-gray-600 leading-[1.9] overflow-x-auto max-w-full">
               <code>{`POST /deploy
 {
   "agent": "support-swarm-v3",
