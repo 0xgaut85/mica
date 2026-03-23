@@ -260,8 +260,8 @@ export default function Features() {
               <p className="mb-6 sm:mb-8 font-display font-extralight text-xl sm:text-2xl md:text-3xl lg:text-4xl text-gray-700 text-center lg:text-left text-balance px-1 sm:px-0 max-w-full">
                 Collaborating with industry leaders
               </p>
-              <div className="flex w-full min-w-0 justify-center overflow-x-auto overflow-y-visible py-2 [scrollbar-width:thin]">
-                <PartnerOrbitCarousel variant="light" className="shrink-0" />
+              <div className="flex w-full min-w-0 justify-center py-2">
+                <PartnerOrbitCarousel variant="light" />
               </div>
             </div>
             <div ref={labelRowRef} className="flex flex-wrap items-center gap-4 sm:gap-5 mb-6">

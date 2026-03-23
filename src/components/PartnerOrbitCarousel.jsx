@@ -6,10 +6,11 @@ import { PARTNERS } from '../content/partnerOrbitPlaceholders'
 const SLOTS = PARTNERS.length
 
 function orbitDimsForWidth(w) {
-  if (w < 400) return { r: 92, logo: 42 }
-  if (w < 640) return { r: 172, logo: 58 }
-  if (w < 1024) return { r: 218, logo: 64 }
-  return { r: 258, logo: 70 }
+  if (w < 360) return { r: 72, logo: 36, pad: 36 }
+  if (w < 400) return { r: 84, logo: 40, pad: 40 }
+  if (w < 640) return { r: 172, logo: 58, pad: 64 }
+  if (w < 1024) return { r: 218, logo: 64, pad: 80 }
+  return { r: 258, logo: 70, pad: 96 }
 }
 
 const PartnerOrbitCarousel = forwardRef(function PartnerOrbitCarousel(
@@ -21,7 +22,9 @@ const PartnerOrbitCarousel = forwardRef(function PartnerOrbitCarousel(
   const slotRefs = useRef([])
 
   const [dims, setDims] = useState(() =>
-    typeof window !== 'undefined' ? orbitDimsForWidth(window.innerWidth) : { r: 258, logo: 70 },
+    typeof window !== 'undefined'
+      ? orbitDimsForWidth(window.innerWidth)
+      : { r: 258, logo: 70, pad: 96 },
   )
 
   const onResize = useCallback(() => {
@@ -42,8 +45,7 @@ const PartnerOrbitCarousel = forwardRef(function PartnerOrbitCarousel(
   useImperativeHandle(ref, () => wrapperRef.current)
 
   const isDark = variant === 'dark'
-  const { r: radiusPx, logo: logoPx } = dims
-  const ringPadding = 96
+  const { r: radiusPx, logo: logoPx, pad: ringPadding } = dims
   const ringSize = radiusPx * 2 + logoPx + ringPadding
 
   useEffect(() => {
