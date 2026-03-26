@@ -10,12 +10,26 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@rainbow-me/rainbowkit": "^2.2.10",
+    "@solana/wallet-adapter-base": "^0.9.27",
+    "@solana/wallet-adapter-phantom": "^0.9.28",
+    "@solana/wallet-adapter-react": "^0.15.39",
+    "@solana/wallet-adapter-react-ui": "^0.9.39",
+    "@solana/wallet-adapter-solflare": "^0.6.32",
+    "@solana/web3.js": "^1.98.4",
+    "@tanstack/react-query": "^5.95.2",
+    "ethers": "^6.16.0",
     "framer-motion": "^11.11.17",
     "gsap": "^3.12.5",
+    "puppeteer": "^24.40.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.13.1",
-    "serve": "^14.2.6"
+    "serve": "^14.2.6",
+    "siwe": "^3.0.0",
+    "viem": "^2.47.6",
+    "vite-plugin-node-polyfills": "^0.25.0",
+    "wagmi": "^2.19.5"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.3",

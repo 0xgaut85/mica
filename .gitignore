@@ -4,3 +4,6 @@ dist
 *.local
 .DS_Store
 Thumbs.db
+server/node_modules
+server/.env
+.env

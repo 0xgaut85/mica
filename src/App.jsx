@@ -5,6 +5,7 @@ import MobileDock from './components/MobileDock'
 import ConsentGate from './components/ConsentGate'
 import Landing from './pages/Landing'
 import Careers from './pages/Careers'
+import UseMicaApp from './pages/UseMicaApp'
 import { LegalDocsProvider } from './context/LegalDocsContext'
 
 export default function App() {
@@ -19,6 +20,7 @@ export default function App() {
               <Routes>
                 <Route path="/" element={<Landing />} />
                 <Route path="/careers" element={<Careers />} />
+                <Route path="/app/*" element={<UseMicaApp />} />
               </Routes>
               {/*
                 Must render after Routes so layout runs after the new page is in the DOM.

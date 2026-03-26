@@ -49,6 +49,12 @@ export default function MobileDock() {
         >
           Careers
         </Link>
+        <Link
+          to="/app"
+          className="flex-1 text-center font-mono text-[9px] tracking-[0.18em] uppercase py-2.5 font-bold text-red-mica hover:text-black active:text-black transition-colors duration-200"
+        >
+          Use Mica
+        </Link>
         <a
           href="https://x.com/micadotenergy"
           target="_blank"
