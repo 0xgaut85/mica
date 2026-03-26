@@ -549,26 +549,22 @@ export default function Whitepaper() {
                   mica Claude Code plugin
                 </h3>
                 <p className="font-mono text-[13px] text-gray-700 leading-relaxed mb-3">
-                  Install the mica plugin for Claude Code — modeled on{' '}
-                  <a
-                    href="https://github.com/get-Lucid/Lucid"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-red-mica hover:underline"
-                  >
-                    Lucid
-                  </a>
-                  . When prompted, enter your <code className="bg-gray-100/80 px-1 rounded text-[12px]">mica_</code> API key. The
-                  plugin exposes MCP tools that route your agent's compute-heavy tasks — inference,
-                  batch processing, fine-tuning — through MVM nodes at the cheapest available energy
-                  cost.
+                  Install the mica plugin for Claude Code. When prompted, enter
+                  your <code className="bg-gray-100/80 px-1 rounded text-[12px]">mica_</code> API key.
+                  The plugin saves tokens and cuts inference costs by routing your
+                  agent&apos;s compute-heavy tasks — inference, batch processing,
+                  fine-tuning — through MVM nodes instead of expensive cloud providers.
+                  Works with any LLM. Your workloads run on the cheapest available
+                  renewable energy worldwide.
                 </p>
                 <div className="bg-[#060606] text-green-400 font-mono text-[11px] leading-relaxed p-4 rounded overflow-x-auto">
-                  <p className="text-gray-500"># Available MCP tools</p>
-                  <p>mica_deploy_job&nbsp;&nbsp;&nbsp;— Submit a compute job to MVM</p>
-                  <p>mica_check_status — Poll job status and results</p>
-                  <p>mica_energy_stats — Get energy cost and carbon data</p>
-                  <p>mica_verify_proof — Verify on-chain compute proof</p>
+                  <p className="text-gray-500"># Install</p>
+                  <p>/plugin marketplace add mica-energy/mica-plugin</p>
+                  <p className="mt-2 text-gray-500"># MCP tools exposed</p>
+                  <p>mica_route_compute&nbsp;&nbsp;&nbsp;&nbsp;— Route a job through MVM nodes</p>
+                  <p>mica_estimate_savings — Token &amp; cost savings vs cloud</p>
+                  <p>mica_node_status&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;— Check node clusters &amp; energy</p>
+                  <p>mica_check_job&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;— Poll job status and results</p>
                 </div>
               </div>
 

@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "mica": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp-server/dist/index.js"],
+      "env": {
+        "MICA_API_KEY": "",
+        "MICA_API_URL": "https://mica-api-production-16e8.up.railway.app/api",
+        "MICA_TIMEOUT": "10000"
+      }
+    }
+  }
+}

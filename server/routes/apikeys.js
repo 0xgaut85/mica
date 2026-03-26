@@ -46,6 +46,36 @@ router.post('/', requireAuth, async (req, res, next) => {
   }
 })
 
+router.post('/validate', async (req, res, next) => {
+  try {
+    const { key } = req.body
+    if (!key || !key.startsWith('mica_')) {
+      return res.status(400).json({ valid: false, error: 'Invalid key format' })
+    }
+    const hash = hashKey(key)
+    const { rows } = await pool.query(
+      `SELECT ak.id, u.wallet_address, s.plan, s.valid_until
+       FROM api_keys ak
+       JOIN users u ON u.wallet_address = ak.wallet_address
+       LEFT JOIN subscriptions s ON s.wallet_address = ak.wallet_address AND s.valid_until > now()
+       WHERE ak.key_hash = $1 AND ak.revoked_at IS NULL
+       LIMIT 1`,
+      [hash],
+    )
+    if (!rows.length) {
+      return res.json({ valid: false, error: 'Key not found or revoked' })
+    }
+    const row = rows[0]
+    res.json({
+      valid: true,
+      plan: row.plan || 'none',
+      active: !!row.plan,
+    })
+  } catch (err) {
+    next(err)
+  }
+})
+
 router.delete('/:id', requireAuth, async (req, res, next) => {
   try {
     await pool.query(

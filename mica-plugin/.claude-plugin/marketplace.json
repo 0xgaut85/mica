@@ -1,0 +1,23 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "mica",
+  "version": "1.0.0",
+  "description": "Save tokens and cut inference costs by routing compute through MVM nodes on the cheapest available energy.",
+  "owner": {
+    "name": "mica-energy",
+    "email": "contact@mica.energy"
+  },
+  "plugins": [
+    {
+      "name": "mica",
+      "description": "Save tokens and cut inference costs by routing compute through MVM nodes on the cheapest available energy.",
+      "version": "1.0.0",
+      "author": {
+        "name": "mica-energy",
+        "email": "contact@mica.energy"
+      },
+      "source": "./",
+      "category": "development"
+    }
+  ]
+}
