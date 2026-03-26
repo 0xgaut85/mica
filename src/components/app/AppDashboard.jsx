@@ -20,6 +20,7 @@ function DashboardInner() {
 
   const [authed, setAuthed] = useState(!!getToken())
   const [authLoading, setAuthLoading] = useState(false)
+  const [authError, setAuthError] = useState(null)
 
   const {
     profile, updateProfile,
@@ -49,10 +50,11 @@ function DashboardInner() {
   }, [evmAccount.isConnected, evmAccount.address, evmAccount.connector, solWallet.connected, solWallet.publicKey, solWallet.wallet])
 
   useEffect(() => {
-    if (!connectedWallet || authed || authLoading) return
+    if (!connectedWallet || authed || authLoading || authError) return
 
     async function doAuth() {
       setAuthLoading(true)
+      setAuthError(null)
       try {
         if (connectedWallet.chain === 'EVM') {
           const { nonce } = await api.getNonce()
@@ -83,13 +85,14 @@ function DashboardInner() {
         }
       } catch (err) {
         console.error('Auth failed:', err)
+        setAuthError(err.message || 'Authentication failed. The API server may be unavailable.')
       } finally {
         setAuthLoading(false)
       }
     }
 
     doAuth()
-  }, [connectedWallet, authed, authLoading, evmAccount.chainId, signMessageAsync, solWallet])
+  }, [connectedWallet, authed, authLoading, authError, evmAccount.chainId, signMessageAsync, solWallet])
 
   useEffect(() => {
     if (!authed) return
@@ -184,6 +187,34 @@ function DashboardInner() {
     return (
       <div className="noise-overlay min-h-screen bg-cream flex items-center justify-center">
         <p className="font-mono text-sm text-gray-500 tracking-[0.2em]">Verifying wallet...</p>
+      </div>
+    )
+  }
+
+  if (authError) {
+    return (
+      <div className="noise-overlay min-h-screen bg-cream flex items-center justify-center">
+        <div className="text-center max-w-md px-6">
+          <span className="inline-block w-2.5 h-2.5 bg-red-mica mb-4" />
+          <p className="font-mono text-sm text-gray-700 mb-2">Authentication failed</p>
+          <p className="font-mono text-[11px] text-gray-500 mb-6">{authError}</p>
+          <div className="flex justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => setAuthError(null)}
+              className="font-mono text-[10px] tracking-[0.18em] uppercase py-2.5 px-5 bg-[#060606] text-white clip-corner-tr-sm hover:bg-red-mica transition-colors"
+            >
+              Retry
+            </button>
+            <button
+              type="button"
+              onClick={handleDisconnect}
+              className="font-mono text-[10px] tracking-[0.18em] uppercase py-2.5 px-5 border border-dashed border-[var(--gray-border)] text-gray-600 hover:text-red-mica transition-colors"
+            >
+              Disconnect
+            </button>
+          </div>
+        </div>
       </div>
     )
   }

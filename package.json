@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "start": "serve dist -s -l tcp://0.0.0.0:${PORT:-3000}",
+    "start": "node scripts/railway-serve.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
