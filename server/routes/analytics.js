@@ -10,12 +10,25 @@ import {
   mergePublicSubscriptionCounts,
   mmrFromPlanCounts,
 } from '../lib/analyticsRevenue.js'
-import { normalizeSynthStateRow } from '../lib/analyticsSynthDefaults.js'
+import {
+  normalizeSynthStateRow,
+  REVENUE_DAILY_SERIES_START,
+} from '../lib/analyticsSynthDefaults.js'
 import { growthProgressMs, targetMmrUsd } from '../lib/analyticsSynthGrowth.js'
 
 const router = Router()
 
 const REVENUE_SERIES_DAYS = 90
+
+function revenueSeriesQueryStartUtc() {
+  const anchorMs = Date.parse(`${REVENUE_DAILY_SERIES_START}T00:00:00.000Z`)
+  const today = new Date()
+  today.setUTCHours(0, 0, 0, 0)
+  const rolling = new Date(today)
+  rolling.setUTCDate(rolling.getUTCDate() - (REVENUE_SERIES_DAYS - 1))
+  const start = rolling.getTime() < anchorMs ? new Date(anchorMs) : rolling
+  return start.toISOString().slice(0, 10)
+}
 
 const ANALYTICS_API_META = {
   analyticsApiVersion: 4,
@@ -187,9 +200,9 @@ router.get('/dashboard', async (_req, res, next) => {
       pool.query(
         `SELECT day, gross_usd, net_usd
          FROM analytics_revenue_daily
-         WHERE day >= (CURRENT_DATE - ($1::int - 1))
+         WHERE day >= $1::date AND day <= CURRENT_DATE
          ORDER BY day ASC`,
-        [REVENUE_SERIES_DAYS],
+        [revenueSeriesQueryStartUtc()],
       ),
       pool.query(
         `SELECT region_code AS "regionCode", label, usd_per_kwh AS "usdPerKwh", source_url AS "sourceUrl", updated_at AS "updatedAt"
@@ -221,9 +234,10 @@ router.get('/dashboard', async (_req, res, next) => {
     const cumulativeKwh = synthState.cumulative_kwh_shifted
     const dashboardUsersFloor = synthState.dashboard_users
     const realUsers = usersR.rows[0]?.n ?? 0
-    const usersDisplayed = Math.max(realUsers, dashboardUsersFloor)
+    /** Headline counts follow the public synthetic model; registered totals exposed separately. */
+    const usersDisplayed = dashboardUsersFloor
     const realKeys = keysR.rows[0]?.n ?? 0
-    const apiKeysDisplayed = Math.max(realKeys, synthState.api_keys_public)
+    const apiKeysDisplayed = synthState.api_keys_public
 
     const env = computeEnvironmentFromKwh(cumulativeKwh)
     const dates = []

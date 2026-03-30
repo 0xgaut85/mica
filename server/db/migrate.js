@@ -1,6 +1,10 @@
 import 'dotenv/config'
 import pool from './pool.js'
 import { NET_REVENUE_FRACTION } from '../lib/analyticsRevenue.js'
+import {
+  PUBLIC_SYNTH_DEFAULTS,
+  REVENUE_DAILY_SERIES_START,
+} from '../lib/analyticsSynthDefaults.js'
 
 const SQL = `
 CREATE TABLE IF NOT EXISTS users (
@@ -40,10 +44,10 @@ CREATE TABLE IF NOT EXISTS analytics_synthetic_state (
   mvm_created INT NOT NULL DEFAULT 14,
   mvm_running INT NOT NULL DEFAULT 11,
   cumulative_kwh_shifted DOUBLE PRECISION NOT NULL DEFAULT 2180000,
-  dashboard_users INT NOT NULL DEFAULT 150,
+  dashboard_users INT NOT NULL DEFAULT 221,
   subs_basic_public INT NOT NULL DEFAULT 200,
   subs_premium_public INT NOT NULL DEFAULT 40,
-  api_keys_public INT NOT NULL DEFAULT 40,
+  api_keys_public INT NOT NULL DEFAULT 59,
   synth_mmr_floor_usd NUMERIC(14,2) NOT NULL DEFAULT 14000,
   synth_mmr_ceiling_usd NUMERIC(14,2) NOT NULL DEFAULT 110000,
   synth_growth_days INT NOT NULL DEFAULT 15,
@@ -61,13 +65,13 @@ ALTER TABLE analytics_synthetic_state
   ADD COLUMN IF NOT EXISTS synth_growth_start_at TIMESTAMPTZ;
 
 ALTER TABLE analytics_synthetic_state
-  ADD COLUMN IF NOT EXISTS dashboard_users INT NOT NULL DEFAULT 150;
+  ADD COLUMN IF NOT EXISTS dashboard_users INT NOT NULL DEFAULT 221;
 ALTER TABLE analytics_synthetic_state
   ADD COLUMN IF NOT EXISTS subs_basic_public INT NOT NULL DEFAULT 200;
 ALTER TABLE analytics_synthetic_state
   ADD COLUMN IF NOT EXISTS subs_premium_public INT NOT NULL DEFAULT 40;
 ALTER TABLE analytics_synthetic_state
-  ADD COLUMN IF NOT EXISTS api_keys_public INT NOT NULL DEFAULT 40;
+  ADD COLUMN IF NOT EXISTS api_keys_public INT NOT NULL DEFAULT 59;
 
 CREATE TABLE IF NOT EXISTS analytics_revenue_daily (
   day DATE PRIMARY KEY,
@@ -86,26 +90,47 @@ CREATE TABLE IF NOT EXISTS analytics_electricity_reference (
 `
 
 async function seedAnalyticsDefaults(client) {
+  const d = PUBLIC_SYNTH_DEFAULTS
   await client.query(
     `INSERT INTO analytics_synthetic_state (
        id, mvm_created, mvm_running, cumulative_kwh_shifted, dashboard_users,
        subs_basic_public, subs_premium_public, api_keys_public
      )
-     VALUES (1, 14, 11, 2180000, 150, 200, 40, 40)
+     VALUES (1, $1, $2, $3, $4, $5, $6, $7)
      ON CONFLICT (id) DO NOTHING`,
+    [
+      d.mvm_created,
+      d.mvm_running,
+      d.cumulative_kwh_shifted,
+      d.dashboard_users,
+      d.subs_basic_public,
+      d.subs_premium_public,
+      d.api_keys_public,
+    ],
   )
   await client.query(
     `UPDATE analytics_synthetic_state SET
-       subs_basic_public = GREATEST(subs_basic_public, 200),
-       subs_premium_public = GREATEST(subs_premium_public, 40),
-       api_keys_public = GREATEST(api_keys_public, 40),
-       dashboard_users = GREATEST(dashboard_users, 150),
-       cumulative_kwh_shifted = GREATEST(cumulative_kwh_shifted, 2180000)
+       subs_basic_public = GREATEST(subs_basic_public, $1),
+       subs_premium_public = GREATEST(subs_premium_public, $2),
+       api_keys_public = GREATEST(api_keys_public, $3),
+       dashboard_users = GREATEST(dashboard_users, $4),
+       cumulative_kwh_shifted = GREATEST(cumulative_kwh_shifted, $5)
      WHERE id = 1`,
+    [
+      d.subs_basic_public,
+      d.subs_premium_public,
+      d.api_keys_public,
+      d.dashboard_users,
+      d.cumulative_kwh_shifted,
+    ],
   )
   await client.query(
-    `UPDATE analytics_synthetic_state SET dashboard_users = 150
-     WHERE id = 1 AND dashboard_users >= 2500`,
+    `UPDATE analytics_synthetic_state SET
+       dashboard_users = $1,
+       api_keys_public = $2,
+       synth_growth_start_at = $3::timestamptz
+     WHERE id = 1 AND dashboard_users > 2200`,
+    [d.dashboard_users, d.api_keys_public, `${REVENUE_DAILY_SERIES_START}T00:00:00Z`],
   )
   await client.query(
     `UPDATE analytics_synthetic_state SET
@@ -171,21 +196,30 @@ async function seedAnalyticsDefaults(client) {
   const { rows: maxRow } = await client.query(
     `SELECT COALESCE(MAX(gross_usd), 0)::numeric AS m FROM analytics_revenue_daily`,
   )
+  const { rows: minDayRow } = await client.query(`SELECT MIN(day) AS d FROM analytics_revenue_daily`)
   const maxGross = Number(maxRow[0]?.m) || 0
-  /** One-time backfill: ramp to ~$14k MMR baseline (worker grows toward ceiling after synth_growth_start_at). */
-  if (maxGross > 0 && maxGross >= 13500) return
+  const rawMin = minDayRow[0]?.d
+  const minDayStr =
+    rawMin == null
+      ? null
+      : typeof rawMin === 'string'
+        ? rawMin.slice(0, 10)
+        : rawMin instanceof Date
+          ? rawMin.toISOString().slice(0, 10)
+          : String(rawMin).slice(0, 10)
+  /** Reseed when empty or first row is not the configured anchor (e.g. 2026-01-01). */
+  const needsRevenueReseed = !minDayStr || minDayStr !== REVENUE_DAILY_SERIES_START
+  if (!needsRevenueReseed && maxGross > 0 && maxGross >= 13500) return
 
   await client.query(`DELETE FROM analytics_revenue_daily`)
 
-  const today = new Date()
-  today.setUTCHours(0, 0, 0, 0)
+  const startMs = Date.parse(`${REVENUE_DAILY_SERIES_START}T00:00:00.000Z`)
   const grossStart = 3200
   const grossEnd = 14000
-  for (let i = 89; i >= 0; i -= 1) {
-    const d = new Date(today)
-    d.setUTCDate(d.getUTCDate() - i)
-    const dayStr = d.toISOString().slice(0, 10)
-    const t = (89 - i) / 89
+  for (let i = 0; i < 90; i += 1) {
+    const dayDate = new Date(startMs + i * 86400000)
+    const dayStr = dayDate.toISOString().slice(0, 10)
+    const t = i / 89
     const gross =
       Math.round((grossStart + t * (grossEnd - grossStart) + Math.sin(t * Math.PI * 6) * 48) * 100) / 100
     const baseNet = gross * NET_REVENUE_FRACTION
