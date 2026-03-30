@@ -37,24 +37,37 @@ CREATE INDEX IF NOT EXISTS idx_apikey_wallet ON api_keys(wallet_address);
 
 CREATE TABLE IF NOT EXISTS analytics_synthetic_state (
   id INT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
-  mvm_created INT NOT NULL DEFAULT 92,
-  mvm_running INT NOT NULL DEFAULT 60,
-  cumulative_kwh_shifted DOUBLE PRECISION NOT NULL DEFAULT 218000,
-  dashboard_users INT NOT NULL DEFAULT 95,
-  subs_basic_public INT NOT NULL DEFAULT 52,
-  subs_premium_public INT NOT NULL DEFAULT 28,
-  api_keys_public INT NOT NULL DEFAULT 48,
+  mvm_created INT NOT NULL DEFAULT 14,
+  mvm_running INT NOT NULL DEFAULT 11,
+  cumulative_kwh_shifted DOUBLE PRECISION NOT NULL DEFAULT 2180000,
+  dashboard_users INT NOT NULL DEFAULT 3200,
+  subs_basic_public INT NOT NULL DEFAULT 400,
+  subs_premium_public INT NOT NULL DEFAULT 80,
+  api_keys_public INT NOT NULL DEFAULT 620,
+  synth_mmr_floor_usd NUMERIC(14,2) NOT NULL DEFAULT 14000,
+  synth_mmr_ceiling_usd NUMERIC(14,2) NOT NULL DEFAULT 110000,
+  synth_growth_days INT NOT NULL DEFAULT 15,
+  synth_growth_start_at TIMESTAMPTZ,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 ALTER TABLE analytics_synthetic_state
-  ADD COLUMN IF NOT EXISTS dashboard_users INT NOT NULL DEFAULT 95;
+  ADD COLUMN IF NOT EXISTS synth_mmr_floor_usd NUMERIC(14,2) NOT NULL DEFAULT 14000;
 ALTER TABLE analytics_synthetic_state
-  ADD COLUMN IF NOT EXISTS subs_basic_public INT NOT NULL DEFAULT 52;
+  ADD COLUMN IF NOT EXISTS synth_mmr_ceiling_usd NUMERIC(14,2) NOT NULL DEFAULT 110000;
 ALTER TABLE analytics_synthetic_state
-  ADD COLUMN IF NOT EXISTS subs_premium_public INT NOT NULL DEFAULT 28;
+  ADD COLUMN IF NOT EXISTS synth_growth_days INT NOT NULL DEFAULT 15;
 ALTER TABLE analytics_synthetic_state
-  ADD COLUMN IF NOT EXISTS api_keys_public INT NOT NULL DEFAULT 48;
+  ADD COLUMN IF NOT EXISTS synth_growth_start_at TIMESTAMPTZ;
+
+ALTER TABLE analytics_synthetic_state
+  ADD COLUMN IF NOT EXISTS dashboard_users INT NOT NULL DEFAULT 3200;
+ALTER TABLE analytics_synthetic_state
+  ADD COLUMN IF NOT EXISTS subs_basic_public INT NOT NULL DEFAULT 400;
+ALTER TABLE analytics_synthetic_state
+  ADD COLUMN IF NOT EXISTS subs_premium_public INT NOT NULL DEFAULT 80;
+ALTER TABLE analytics_synthetic_state
+  ADD COLUMN IF NOT EXISTS api_keys_public INT NOT NULL DEFAULT 620;
 
 CREATE TABLE IF NOT EXISTS analytics_revenue_daily (
   day DATE PRIMARY KEY,
@@ -78,26 +91,38 @@ async function seedAnalyticsDefaults(client) {
        id, mvm_created, mvm_running, cumulative_kwh_shifted, dashboard_users,
        subs_basic_public, subs_premium_public, api_keys_public
      )
-     VALUES (1, 92, 60, 218000, 95, 52, 28, 48)
+     VALUES (1, 14, 11, 2180000, 3200, 400, 80, 620)
      ON CONFLICT (id) DO NOTHING`,
   )
   await client.query(
     `UPDATE analytics_synthetic_state SET
-       subs_basic_public = COALESCE(subs_basic_public, 52),
-       subs_premium_public = COALESCE(subs_premium_public, 28),
-       api_keys_public = COALESCE(api_keys_public, 48)
+       subs_basic_public = GREATEST(subs_basic_public, 400),
+       subs_premium_public = GREATEST(subs_premium_public, 80),
+       api_keys_public = GREATEST(api_keys_public, 620),
+       dashboard_users = GREATEST(dashboard_users, 3200),
+       cumulative_kwh_shifted = GREATEST(cumulative_kwh_shifted, 2180000)
      WHERE id = 1`,
   )
   await client.query(
     `UPDATE analytics_synthetic_state SET
-       mvm_created = 92,
-       mvm_running = 60,
-       cumulative_kwh_shifted = 218000,
-       dashboard_users = GREATEST(dashboard_users, 95)
-     WHERE id = 1
-       AND mvm_created = 14
-       AND mvm_running = 7
-       AND (cumulative_kwh_shifted = 42000 OR cumulative_kwh_shifted BETWEEN 41999 AND 42001)`,
+       mvm_created = 14,
+       mvm_running = 11
+     WHERE id = 1 AND mvm_created = 92 AND mvm_running = 60`,
+  )
+  await client.query(
+    `UPDATE analytics_synthetic_state SET mvm_created = LEAST(mvm_created, 100) WHERE id = 1`,
+  )
+  await client.query(
+    `UPDATE analytics_synthetic_state SET mvm_running = LEAST(mvm_running, mvm_created) WHERE id = 1`,
+  )
+
+  await client.query(
+    `UPDATE analytics_synthetic_state SET
+       synth_growth_start_at = COALESCE(synth_growth_start_at, now()),
+       synth_mmr_floor_usd = COALESCE(NULLIF(synth_mmr_floor_usd, 0), 14000),
+       synth_mmr_ceiling_usd = COALESCE(NULLIF(synth_mmr_ceiling_usd, 0), 110000),
+       synth_growth_days = CASE WHEN synth_growth_days < 1 THEN 15 ELSE synth_growth_days END
+     WHERE id = 1`,
   )
 
   const regions = [
@@ -143,15 +168,15 @@ async function seedAnalyticsDefaults(client) {
     `SELECT COALESCE(MAX(gross_usd), 0)::numeric AS m FROM analytics_revenue_daily`,
   )
   const maxGross = Number(maxRow[0]?.m) || 0
-  /** Replace stub series (old demo scale) with tier-based MMR ramp; net curve offset from pure 88% for visible separation. */
-  if (maxGross > 0 && maxGross >= 1800) return
+  /** One-time backfill: ramp to ~$14k MMR baseline (worker grows toward ceiling after synth_growth_start_at). */
+  if (maxGross > 0 && maxGross >= 13500) return
 
   await client.query(`DELETE FROM analytics_revenue_daily`)
 
   const today = new Date()
   today.setUTCHours(0, 0, 0, 0)
-  const grossStart = 920
-  const grossEnd = 3140
+  const grossStart = 3200
+  const grossEnd = 14000
   for (let i = 89; i >= 0; i -= 1) {
     const d = new Date(today)
     d.setUTCDate(d.getUTCDate() - i)

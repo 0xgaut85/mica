@@ -7,7 +7,8 @@
     "dev": "node --watch index.js",
     "start": "node index.js",
     "db:migrate": "node db/migrate.js",
-    "analytics:tick": "node scripts/analytics-tick.mjs"
+    "analytics:tick": "node scripts/analytics-tick.mjs",
+    "analytics:worker": "node scripts/analytics-worker.mjs"
   },
   "dependencies": {
     "cors": "^2.8.5",

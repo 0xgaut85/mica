@@ -10,10 +10,24 @@ import {
   mergePublicSubscriptionCounts,
   mmrFromPlanCounts,
 } from '../lib/analyticsRevenue.js'
+import { normalizeSynthStateRow } from '../lib/analyticsSynthDefaults.js'
+import { growthProgressMs, targetMmrUsd } from '../lib/analyticsSynthGrowth.js'
 
 const router = Router()
 
 const REVENUE_SERIES_DAYS = 90
+
+const ANALYTICS_API_META = {
+  analyticsApiVersion: 4,
+  gitCommit:
+    (process.env.RAILWAY_GIT_COMMIT_SHA ||
+      process.env.GITHUB_SHA ||
+      process.env.VERCEL_GIT_COMMIT_SHA ||
+      process.env.COMMIT_REF ||
+      '')
+      .toString()
+      .slice(0, 7) || null,
+}
 
 function round4(x) {
   return Math.round(Number(x) * 10000) / 10000
@@ -136,7 +150,10 @@ router.get('/subscription-revenue', async (_req, res, next) => {
         `SELECT subs_basic_public, subs_premium_public FROM analytics_synthetic_state WHERE id = 1`,
       ),
     ])
-    const merged = mergePublicSubscriptionCounts(byPlan, synthR.rows[0])
+    const merged = mergePublicSubscriptionCounts(
+      byPlan,
+      normalizeSynthStateRow(synthR.rows[0]),
+    )
     const mmrUsd = mmrFromPlanCounts(merged)
     const arrUsd = mmrUsd * 12
     const activeTotal = merged.basic + merged.premium + merged.enterprise
@@ -163,7 +180,8 @@ router.get('/dashboard', async (_req, res, next) => {
       ),
       pool.query(
         `SELECT mvm_created, mvm_running, cumulative_kwh_shifted, dashboard_users,
-                subs_basic_public, subs_premium_public, api_keys_public
+                subs_basic_public, subs_premium_public, api_keys_public,
+                synth_mmr_floor_usd, synth_mmr_ceiling_usd, synth_growth_days, synth_growth_start_at
          FROM analytics_synthetic_state WHERE id = 1`,
       ),
       pool.query(
@@ -190,25 +208,22 @@ router.get('/dashboard', async (_req, res, next) => {
       })(),
     ])
 
-    let mvmCreated = 92
-    let mvmRunning = 60
-    let cumulativeKwh = 218000
-    let dashboardUsersFloor = 95
-    let synthRow = null
-    if (synthR.rows[0]) {
-      synthRow = synthR.rows[0]
-      mvmCreated = synthRow.mvm_created
-      mvmRunning = synthRow.mvm_running
-      cumulativeKwh = Number(synthRow.cumulative_kwh_shifted) || 0
-      const du = synthRow.dashboard_users
-      if (du != null && Number.isFinite(Number(du))) dashboardUsersFloor = Number(du)
-    }
+    const rawSynth = synthR.rows[0]
+    const synthState = normalizeSynthStateRow(rawSynth)
+    const mmrFloor = Number(rawSynth?.synth_mmr_floor_usd) || 14000
+    const mmrCeil = Number(rawSynth?.synth_mmr_ceiling_usd) || 110000
+    const growthDays = Number(rawSynth?.synth_growth_days) || 15
+    const growthStartAt = rawSynth?.synth_growth_start_at
+    const growthProgress = growthProgressMs(growthStartAt, growthDays)
+    const growthTargetMmr = targetMmrUsd(mmrFloor, mmrCeil, growthProgress)
+    const mvmCreated = synthState.mvm_created
+    const mvmRunning = synthState.mvm_running
+    const cumulativeKwh = synthState.cumulative_kwh_shifted
+    const dashboardUsersFloor = synthState.dashboard_users
     const realUsers = usersR.rows[0]?.n ?? 0
     const usersDisplayed = Math.max(realUsers, dashboardUsersFloor)
     const realKeys = keysR.rows[0]?.n ?? 0
-    const keysFloor = Number(synthRow?.api_keys_public)
-    const apiKeysDisplayed =
-      Number.isFinite(keysFloor) && keysFloor >= 0 ? Math.max(realKeys, keysFloor) : realKeys
+    const apiKeysDisplayed = Math.max(realKeys, synthState.api_keys_public)
 
     const env = computeEnvironmentFromKwh(cumulativeKwh)
     const dates = []
@@ -221,7 +236,7 @@ router.get('/dashboard', async (_req, res, next) => {
       net.push(Number(r.net_usd))
     }
 
-    const byPlanDisplay = mergePublicSubscriptionCounts(byPlan, synthRow)
+    const byPlanDisplay = mergePublicSubscriptionCounts(byPlan, synthState)
     const mmrUsd = mmrFromPlanCounts(byPlanDisplay)
     const arrUsd = mmrUsd * 12
     const activeTotal =
@@ -232,6 +247,17 @@ router.get('/dashboard', async (_req, res, next) => {
     const electricityComparison = buildElectricityComparison(electricityByRegion, elecR.rows)
 
     res.json({
+      meta: {
+        ...ANALYTICS_API_META,
+        growthModel: {
+          progress: round4(growthProgress),
+          targetMmrUsd: round4(growthTargetMmr),
+          mmrFloorUsd: round4(mmrFloor),
+          mmrCeilingUsd: round4(mmrCeil),
+          growthDays,
+          startedAt: growthStartAt,
+        },
+      },
       users: usersDisplayed,
       usersRegistered: realUsers,
       usersPublicFloor: dashboardUsersFloor,

@@ -1,0 +1,10 @@
+# Shrink `railway up` (avoid 413). Nixpacks installs npm deps on the builder.
+node_modules
+**/node_modules
+.git
+.cursor
+dist
+.vite
+videomica
+docs
+mica-plugin

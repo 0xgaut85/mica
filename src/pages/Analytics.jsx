@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 
@@ -53,6 +53,10 @@ function formatUsdAxis(n) {
   return formatUsd(v)
 }
 
+function clamp01(t) {
+  return Math.min(1, Math.max(0, t))
+}
+
 function polylinePoints(series, x0, x1, y0, y1) {
   const b = computeSeriesBounds(series)
   if (!b) return ''
@@ -65,6 +69,19 @@ function polylinePoints(series, x0, x1, y0, y1) {
       return `${x},${y}`
     })
     .join(' ')
+}
+
+function seriesIndexFromSvgX(svg, clientX, x0, x1, len) {
+  if (!svg || len < 2) return null
+  const pt = svg.createSVGPoint()
+  pt.x = clientX
+  pt.y = 0
+  const ctm = svg.getScreenCTM()
+  if (!ctm) return null
+  const p = pt.matrixTransform(ctm.inverse())
+  if (p.x < x0 || p.x > x1) return null
+  const t = clamp01((p.x - x0) / (x1 - x0))
+  return Math.round(t * (len - 1))
 }
 
 function CategoryHeading({ eyebrow, title, className = '' }) {
@@ -90,7 +107,11 @@ function ChartShell({
   series = null,
   stroke = '#fb7185',
   showUsdYTicks = false,
+  dateLabels = null,
+  scrubbable = false,
 }) {
+  const svgRef = useRef(null)
+  const [hoverIdx, setHoverIdx] = useState(null)
   const vbW = hero ? 800 : 400
   const vbH = hero ? 320 : 200
   const gridLines = hero ? 7 : 4
@@ -122,6 +143,29 @@ function ChartShell({
     [series, x0, x1, y0, y1],
   )
   const hasSeries = Boolean(pts)
+  const bounds = useMemo(() => (series?.length >= 2 ? computeSeriesBounds(series) : null), [series])
+
+  const canScrub =
+    scrubbable &&
+    hasSeries &&
+    Array.isArray(dateLabels) &&
+    dateLabels.length === series?.length
+
+  const hoverCx =
+    hoverIdx != null && series?.length >= 2
+      ? x0 + (x1 - x0) * (hoverIdx / (series.length - 1))
+      : null
+  const hoverVal = hoverIdx != null && bounds ? Number(series[hoverIdx]) : null
+  const hoverCy =
+    hoverIdx != null && bounds && Number.isFinite(hoverVal)
+      ? y1 - ((hoverVal - bounds.min) / bounds.range) * (y1 - y0)
+      : null
+
+  const onScrubPointer = (e) => {
+    if (!canScrub || !svgRef.current) return
+    const idx = seriesIndexFromSvgX(svgRef.current, e.clientX, x0, x1, series.length)
+    setHoverIdx(idx)
+  }
 
   const yTickLabels = useMemo(() => {
     if (!showUsdYTicks || !series?.length || series.length < 2) return []
@@ -158,7 +202,8 @@ function ChartShell({
       </header>
       <div className="flex-1 min-h-[180px] md:min-h-[200px] w-full">
         <svg
-          className="w-full h-full block text-zinc-500 min-h-[180px]"
+          ref={svgRef}
+          className={`w-full h-full block text-zinc-500 min-h-[180px] ${canScrub ? 'touch-none select-none' : ''}`}
           viewBox={`0 0 ${vbW} ${vbH}`}
           preserveAspectRatio="xMidYMid meet"
           aria-hidden
@@ -188,6 +233,43 @@ function ChartShell({
               points={pts}
             />
           ) : null}
+          {canScrub && hoverIdx != null && hoverCx != null && hoverCy != null ? (
+            <g pointerEvents="none">
+              <line
+                x1={hoverCx}
+                y1={y0}
+                x2={hoverCx}
+                y2={y1}
+                stroke={stroke}
+                strokeOpacity={0.45}
+                strokeWidth={1}
+              />
+              <circle cx={hoverCx} cy={hoverCy} r={5} fill="#09090b" stroke={stroke} strokeWidth={2} />
+              <text
+                x={Math.min(Math.max(hoverCx, x0 + 72), x1 - 72)}
+                y={y0 - 6}
+                textAnchor="middle"
+                fill="#fafafa"
+                style={{ fontSize: hero ? 11 : 10, fontFamily: 'ui-monospace, monospace' }}
+              >
+                {formatUsd(hoverVal)} · {dateLabels[hoverIdx] ?? `d${hoverIdx}`}
+              </text>
+            </g>
+          ) : null}
+          {canScrub ? (
+            <rect
+              x={x0}
+              y={y0}
+              width={x1 - x0}
+              height={y1 - y0}
+              fill="transparent"
+              style={{ cursor: 'crosshair' }}
+              onPointerMove={onScrubPointer}
+              onPointerDown={onScrubPointer}
+              onPointerEnter={onScrubPointer}
+              onPointerLeave={() => setHoverIdx(null)}
+            />
+          ) : null}
           <text
             x={(x0 + x1) / 2}
             y={vbH - 8}
@@ -212,7 +294,7 @@ function ChartShell({
       <p className="font-mono text-[9px] md:text-[10px] text-zinc-500 mt-3 tracking-wide leading-tight">
         {hasSeries
           ? showUsdYTicks
-            ? 'Daily series (UTC). Gross = tier-priced MMR; net uses a day-varying fee model so the two curves are not a fixed ratio.'
+            ? `Daily series (UTC). Gross = tier-priced MMR; net uses a day-varying fee model so the two curves are not a fixed ratio.${scrubbable ? ' Hover or drag across the plot for date and USD.' : ''}`
             : 'Daily series (UTC). Net applies a blended processing take on gross MMR.'
           : 'Awaiting series data.'}
       </p>
@@ -463,7 +545,7 @@ export default function Analytics() {
   useEffect(() => {
     let cancelled = false
     setDashError(null)
-    fetch(`${API_BASE}/analytics/dashboard`)
+    fetch(`${API_BASE}/analytics/dashboard`, { cache: 'no-store' })
       .then(async (r) => {
         if (!r.ok) {
           const msg = `HTTP ${r.status}`
@@ -506,6 +588,7 @@ export default function Analytics() {
 
   const grossSeries = dash?.ok ? dash.revenueSeries?.gross ?? [] : []
   const netSeries = dash?.ok ? dash.revenueSeries?.net ?? [] : []
+  const revenueDates = dash?.ok ? dash.revenueSeries?.dates ?? [] : []
   const env = dash?.ok ? dash.environment : null
   const regions = dash?.ok ? dash.electricityByRegion ?? [] : []
   const electricityLive = dash?.ok ? dash.electricityLive ?? null : null
@@ -593,6 +676,8 @@ export default function Analytics() {
                   series={grossSeries}
                   stroke="#fb7185"
                   showUsdYTicks
+                  dateLabels={revenueDates}
+                  scrubbable
                 />
                 <ChartShell
                   hero
@@ -603,6 +688,8 @@ export default function Analytics() {
                   series={netSeries}
                   stroke="#a8a29e"
                   showUsdYTicks
+                  dateLabels={revenueDates}
+                  scrubbable
                 />
               </div>
             </div>
