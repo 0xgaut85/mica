@@ -40,10 +40,10 @@ CREATE TABLE IF NOT EXISTS analytics_synthetic_state (
   mvm_created INT NOT NULL DEFAULT 14,
   mvm_running INT NOT NULL DEFAULT 11,
   cumulative_kwh_shifted DOUBLE PRECISION NOT NULL DEFAULT 2180000,
-  dashboard_users INT NOT NULL DEFAULT 3200,
-  subs_basic_public INT NOT NULL DEFAULT 400,
-  subs_premium_public INT NOT NULL DEFAULT 80,
-  api_keys_public INT NOT NULL DEFAULT 620,
+  dashboard_users INT NOT NULL DEFAULT 150,
+  subs_basic_public INT NOT NULL DEFAULT 200,
+  subs_premium_public INT NOT NULL DEFAULT 40,
+  api_keys_public INT NOT NULL DEFAULT 40,
   synth_mmr_floor_usd NUMERIC(14,2) NOT NULL DEFAULT 14000,
   synth_mmr_ceiling_usd NUMERIC(14,2) NOT NULL DEFAULT 110000,
   synth_growth_days INT NOT NULL DEFAULT 15,
@@ -61,13 +61,13 @@ ALTER TABLE analytics_synthetic_state
   ADD COLUMN IF NOT EXISTS synth_growth_start_at TIMESTAMPTZ;
 
 ALTER TABLE analytics_synthetic_state
-  ADD COLUMN IF NOT EXISTS dashboard_users INT NOT NULL DEFAULT 3200;
+  ADD COLUMN IF NOT EXISTS dashboard_users INT NOT NULL DEFAULT 150;
 ALTER TABLE analytics_synthetic_state
-  ADD COLUMN IF NOT EXISTS subs_basic_public INT NOT NULL DEFAULT 400;
+  ADD COLUMN IF NOT EXISTS subs_basic_public INT NOT NULL DEFAULT 200;
 ALTER TABLE analytics_synthetic_state
-  ADD COLUMN IF NOT EXISTS subs_premium_public INT NOT NULL DEFAULT 80;
+  ADD COLUMN IF NOT EXISTS subs_premium_public INT NOT NULL DEFAULT 40;
 ALTER TABLE analytics_synthetic_state
-  ADD COLUMN IF NOT EXISTS api_keys_public INT NOT NULL DEFAULT 620;
+  ADD COLUMN IF NOT EXISTS api_keys_public INT NOT NULL DEFAULT 40;
 
 CREATE TABLE IF NOT EXISTS analytics_revenue_daily (
   day DATE PRIMARY KEY,
@@ -91,17 +91,21 @@ async function seedAnalyticsDefaults(client) {
        id, mvm_created, mvm_running, cumulative_kwh_shifted, dashboard_users,
        subs_basic_public, subs_premium_public, api_keys_public
      )
-     VALUES (1, 14, 11, 2180000, 3200, 400, 80, 620)
+     VALUES (1, 14, 11, 2180000, 150, 200, 40, 40)
      ON CONFLICT (id) DO NOTHING`,
   )
   await client.query(
     `UPDATE analytics_synthetic_state SET
-       subs_basic_public = GREATEST(subs_basic_public, 400),
-       subs_premium_public = GREATEST(subs_premium_public, 80),
-       api_keys_public = GREATEST(api_keys_public, 620),
-       dashboard_users = GREATEST(dashboard_users, 3200),
+       subs_basic_public = GREATEST(subs_basic_public, 200),
+       subs_premium_public = GREATEST(subs_premium_public, 40),
+       api_keys_public = GREATEST(api_keys_public, 40),
+       dashboard_users = GREATEST(dashboard_users, 150),
        cumulative_kwh_shifted = GREATEST(cumulative_kwh_shifted, 2180000)
      WHERE id = 1`,
+  )
+  await client.query(
+    `UPDATE analytics_synthetic_state SET dashboard_users = 150
+     WHERE id = 1 AND dashboard_users >= 2500`,
   )
   await client.query(
     `UPDATE analytics_synthetic_state SET

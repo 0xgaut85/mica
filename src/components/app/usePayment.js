@@ -6,7 +6,7 @@ import { api } from './api'
 
 const USDC_BASE_CONTRACT = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
 
-const PLAN_PRICES = { basic: 20, premium: 75 }
+const PLAN_PRICES = { basic: 40, premium: 150 }
 
 const TREASURY = {
   usdc_base: import.meta.env.VITE_TREASURY_USDC_BASE_ADDRESS || '',

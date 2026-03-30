@@ -18,8 +18,8 @@ export function targetMmrUsd(floorUsd, ceilingUsd, progress) {
 
 /** Integer basic/premium seats whose tier MMR is closest to targetUsd. */
 export function seatsForTargetMmr(targetUsd) {
-  const pb = PLAN_PRICES.basic ?? 20
-  const pp = PLAN_PRICES.premium ?? 75
+  const pb = PLAN_PRICES.basic ?? 40
+  const pp = PLAN_PRICES.premium ?? 150
   const t = Math.max(0, Number(targetUsd) || 0)
   let bestB = 0
   let bestP = 0

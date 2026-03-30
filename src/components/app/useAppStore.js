@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react'
 
 const PLANS = {
-  basic: { name: 'Basic', price: 20, features: ['1,000 API calls / month', 'Standard routing', 'Email support'] },
-  premium: { name: 'Premium', price: 75, features: ['25,000 API calls / month', 'Priority routing', 'Dedicated support', 'Webhook events', 'Analytics dashboard'] },
+  basic: { name: 'Basic', price: 40, features: ['1,000 API calls / month', 'Standard routing', 'Email support'] },
+  premium: { name: 'Premium', price: 150, features: ['25,000 API calls / month', 'Priority routing', 'Dedicated support', 'Webhook events', 'Analytics dashboard'] },
   enterprise: { name: 'Enterprise', price: null, features: ['Unlimited API calls', 'Custom routing rules', 'SLA guarantee', 'Dedicated infra', 'On-chain audit trail', '24/7 support'] },
 }
 

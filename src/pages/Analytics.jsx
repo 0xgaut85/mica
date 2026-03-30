@@ -53,6 +53,14 @@ function formatUsdAxis(n) {
   return formatUsd(v)
 }
 
+/** Full-dollar Y-axis labels for revenue charts (easier to read than compact k). */
+function formatUsdChartAxis(n) {
+  const v = Number(n)
+  if (!Number.isFinite(v)) return '—'
+  if (Math.abs(v) >= 1_000_000) return `$${(v / 1_000_000).toFixed(2)}M`
+  return formatUsd(v)
+}
+
 function clamp01(t) {
   return Math.min(1, Math.max(0, t))
 }
@@ -104,22 +112,27 @@ function ChartShell({
   xLabel,
   className = '',
   hero = false,
+  /** Wide full-width panels with taller plot (subscription economics). */
+  banner = false,
   series = null,
   stroke = '#fb7185',
   showUsdYTicks = false,
   dateLabels = null,
   scrubbable = false,
+  footerNote = null,
 }) {
   const svgRef = useRef(null)
   const [hoverIdx, setHoverIdx] = useState(null)
-  const vbW = hero ? 800 : 400
-  const vbH = hero ? 320 : 200
-  const gridLines = hero ? 7 : 4
-  const y0 = 40
-  const y1 = vbH - 32
-  const x0 = hero && showUsdYTicks ? 88 : showUsdYTicks ? 72 : 56
-  const x1 = vbW - 28
+  const vbW = banner ? 1080 : hero ? 800 : 400
+  const vbH = banner ? 440 : hero ? 320 : 200
+  const gridLines = banner ? 6 : hero ? 7 : 4
+  const y0 = banner ? 52 : 40
+  const y1 = vbH - (banner ? 42 : 32)
+  const x0 =
+    banner && showUsdYTicks ? 128 : hero && showUsdYTicks ? 88 : showUsdYTicks ? 72 : 56
+  const x1 = vbW - (banner ? 24 : 28)
   const step = (y1 - y0) / gridLines
+  const isHeroTitle = hero || banner
 
   const lines = []
   for (let i = 1; i <= gridLines; i += 1) {
@@ -171,7 +184,7 @@ function ChartShell({
     if (!showUsdYTicks || !series?.length || series.length < 2) return []
     const b = computeSeriesBounds(series)
     if (!b) return []
-    const n = hero ? 6 : 5
+    const n = banner || hero ? 6 : 5
     const out = []
     for (let j = 0; j < n; j += 1) {
       const t = n <= 1 ? 0 : j / (n - 1)
@@ -180,15 +193,31 @@ function ChartShell({
       out.push({ val, y })
     }
     return out
-  }, [showUsdYTicks, series, hero, y0, y1])
+  }, [showUsdYTicks, series, hero, banner, y0, y1])
+
+  const fmtY = banner && showUsdYTicks ? formatUsdChartAxis : formatUsdAxis
+  const tickFs = banner ? 12 : hero ? 10 : 9
+  const axisStroke = banner ? 1.5 : 1
+  const lineStroke = banner ? 3 : 2
+  const labelFs = banner ? 12 : hero ? 11 : 10
+  const hoverR = banner ? 6 : 5
+  const hoverPad = banner ? 100 : 72
 
   return (
     <section
-      className={`${PANEL} flex flex-col p-5 md:p-6 lg:p-7 min-h-[280px] sm:min-h-[320px] md:min-h-[360px] flex-1 ${className}`}
+      className={`${PANEL} flex flex-col ${
+        banner
+          ? 'p-6 md:p-8 lg:p-10 min-h-[420px] md:min-h-[500px] w-full'
+          : 'p-5 md:p-6 lg:p-7 min-h-[280px] sm:min-h-[320px] md:min-h-[360px] flex-1'
+      } ${className}`}
     >
-      <header className="mb-3 md:mb-4 text-left shrink-0 border-l-[3px] border-red-mica pl-4 md:pl-5">
-        {hero ? (
-          <h3 className="font-display font-light text-xl md:text-2xl lg:text-3xl text-zinc-100 leading-tight">
+      <header className="mb-3 md:mb-5 text-left shrink-0 border-l-[3px] border-red-mica pl-4 md:pl-5">
+        {isHeroTitle ? (
+          <h3
+            className={`font-display font-light text-zinc-100 leading-tight ${
+              banner ? 'text-2xl md:text-3xl lg:text-4xl' : 'text-xl md:text-2xl lg:text-3xl'
+            }`}
+          >
             {title}
           </h3>
         ) : (
@@ -196,38 +225,48 @@ function ChartShell({
             {title}
           </h3>
         )}
-        <p className="font-mono text-[10px] md:text-[11px] text-zinc-400 mt-1.5 leading-relaxed max-w-xl">
+        <p
+          className={`font-mono text-zinc-400 mt-2 leading-relaxed ${
+            banner ? 'text-xs md:text-sm max-w-4xl' : 'text-[10px] md:text-[11px] mt-1.5 max-w-xl'
+          }`}
+        >
           {subtitle}
         </p>
       </header>
-      <div className="flex-1 min-h-[180px] md:min-h-[200px] w-full">
+      <div
+        className={`flex-1 w-full ${
+          banner ? 'min-h-[300px] md:min-h-[380px] lg:min-h-[420px]' : 'min-h-[180px] md:min-h-[200px]'
+        }`}
+      >
         <svg
           ref={svgRef}
-          className={`w-full h-full block text-zinc-500 min-h-[180px] ${canScrub ? 'touch-none select-none' : ''}`}
+          className={`w-full h-full block text-zinc-500 ${
+            banner ? 'min-h-[300px] md:min-h-[380px]' : 'min-h-[180px]'
+          } ${canScrub ? 'touch-none select-none' : ''}`}
           viewBox={`0 0 ${vbW} ${vbH}`}
           preserveAspectRatio="xMidYMid meet"
           aria-hidden
         >
           {lines}
-          <line x1={x0} y1={y0} x2={x0} y2={y1} stroke={STROKE_AXIS} strokeWidth={1} />
-          <line x1={x0} y1={y1} x2={x1} y2={y1} stroke={STROKE_AXIS} strokeWidth={1} />
+          <line x1={x0} y1={y0} x2={x0} y2={y1} stroke={STROKE_AXIS} strokeWidth={axisStroke} />
+          <line x1={x0} y1={y1} x2={x1} y2={y1} stroke={STROKE_AXIS} strokeWidth={axisStroke} />
           {yTickLabels.map(({ val, y }, idx) => (
             <text
               key={idx}
-              x={x0 - 8}
-              y={y + 4}
+              x={x0 - (banner ? 10 : 8)}
+              y={y + (banner ? 5 : 4)}
               textAnchor="end"
-              fill="currentColor"
-              style={{ fontSize: hero ? 10 : 9, fontFamily: 'ui-monospace, monospace' }}
+              fill={banner ? '#d4d4d8' : 'currentColor'}
+              style={{ fontSize: tickFs, fontFamily: 'ui-monospace, monospace', fontWeight: banner ? 500 : 400 }}
             >
-              {formatUsdAxis(val)}
+              {fmtY(val)}
             </text>
           ))}
           {hasSeries ? (
             <polyline
               fill="none"
               stroke={stroke}
-              strokeWidth={2}
+              strokeWidth={lineStroke}
               strokeLinejoin="round"
               strokeLinecap="round"
               points={pts}
@@ -242,15 +281,15 @@ function ChartShell({
                 y2={y1}
                 stroke={stroke}
                 strokeOpacity={0.45}
-                strokeWidth={1}
+                strokeWidth={banner ? 1.5 : 1}
               />
-              <circle cx={hoverCx} cy={hoverCy} r={5} fill="#09090b" stroke={stroke} strokeWidth={2} />
+              <circle cx={hoverCx} cy={hoverCy} r={hoverR} fill="#09090b" stroke={stroke} strokeWidth={2} />
               <text
-                x={Math.min(Math.max(hoverCx, x0 + 72), x1 - 72)}
-                y={y0 - 6}
+                x={Math.min(Math.max(hoverCx, x0 + hoverPad), x1 - hoverPad)}
+                y={banner ? y0 - 10 : y0 - 6}
                 textAnchor="middle"
                 fill="#fafafa"
-                style={{ fontSize: hero ? 11 : 10, fontFamily: 'ui-monospace, monospace' }}
+                style={{ fontSize: labelFs, fontFamily: 'ui-monospace, monospace' }}
               >
                 {formatUsd(hoverVal)} · {dateLabels[hoverIdx] ?? `d${hoverIdx}`}
               </text>
@@ -272,31 +311,37 @@ function ChartShell({
           ) : null}
           <text
             x={(x0 + x1) / 2}
-            y={vbH - 8}
+            y={vbH - (banner ? 10 : 8)}
             textAnchor="middle"
             fill="currentColor"
-            style={{ fontSize: hero ? 11 : 10, fontFamily: 'ui-monospace, monospace' }}
+            style={{ fontSize: labelFs, fontFamily: 'ui-monospace, monospace' }}
           >
             {xLabel}
           </text>
           <text
-            x={16}
+            x={banner ? 22 : 16}
             y={(y0 + y1) / 2}
             textAnchor="middle"
             fill="currentColor"
-            transform={`rotate(-90 16 ${(y0 + y1) / 2})`}
-            style={{ fontSize: hero ? 11 : 10, fontFamily: 'ui-monospace, monospace' }}
+            transform={`rotate(-90 ${banner ? 22 : 16} ${(y0 + y1) / 2})`}
+            style={{ fontSize: labelFs, fontFamily: 'ui-monospace, monospace' }}
           >
             {yLabel}
           </text>
         </svg>
       </div>
-      <p className="font-mono text-[9px] md:text-[10px] text-zinc-500 mt-3 tracking-wide leading-tight">
-        {hasSeries
-          ? showUsdYTicks
-            ? `Daily series (UTC). Gross = tier-priced MMR; net uses a day-varying fee model so the two curves are not a fixed ratio.${scrubbable ? ' Hover or drag across the plot for date and USD.' : ''}`
-            : 'Daily series (UTC). Net applies a blended processing take on gross MMR.'
-          : 'Awaiting series data.'}
+      <p
+        className={`font-mono text-zinc-500 mt-3 md:mt-4 tracking-wide leading-snug ${
+          banner ? 'text-[11px] md:text-xs max-w-5xl' : 'text-[9px] md:text-[10px]'
+        }`}
+      >
+        {footerNote != null
+          ? footerNote
+          : hasSeries
+            ? showUsdYTicks
+              ? `Daily series (UTC). Tier-priced MMR from active seats.${scrubbable ? ' Hover or drag for date and USD.' : ''}`
+              : 'Daily series (UTC).'
+            : 'Awaiting series data.'}
       </p>
     </section>
   )
@@ -661,43 +706,6 @@ export default function Analytics() {
                 </div>
               </details>
             </div>
-
-            <div>
-              <p className="font-mono text-[10px] md:text-xs tracking-[0.2em] text-gray-500 uppercase mb-3 md:mb-4">
-                Subscription economics
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
-                <ChartShell
-                  hero
-                  title="Gross revenue"
-                  subtitle="MMR implied by active basic & premium seats (enterprise excluded until priced)."
-                  yLabel="USD"
-                  xLabel="Day (UTC)"
-                  series={grossSeries}
-                  stroke="#fb7185"
-                  showUsdYTicks
-                  dateLabels={revenueDates}
-                  scrubbable
-                />
-                <ChartShell
-                  hero
-                  title="Net revenue"
-                  subtitle="After blended processing take (typically ~84–92% of gross MMR; varies by day in the model)."
-                  yLabel="USD"
-                  xLabel="Day (UTC)"
-                  series={netSeries}
-                  stroke="#a8a29e"
-                  showUsdYTicks
-                  dateLabels={revenueDates}
-                  scrubbable
-                />
-              </div>
-            </div>
-            {enterpriseNote ? (
-              <p className="font-mono text-xs md:text-sm text-gray-600 leading-relaxed">
-                Enterprise seats are active but not included in MMR until a contract value is on file.
-              </p>
-            ) : null}
           </div>
 
           <div className="flex flex-col gap-8 md:gap-10 min-w-0">
@@ -777,6 +785,55 @@ export default function Analytics() {
                 Fleet activity charts: Pending. Series will appear when operator telemetry is connected.
               </PendingStrip>
             </div>
+          </div>
+
+          <div className="col-span-1 lg:col-span-2 flex flex-col gap-6 md:gap-8 xl:gap-10 w-full min-w-0 mt-4 lg:mt-6">
+            <p className="font-mono text-[10px] md:text-xs tracking-[0.2em] text-gray-500 uppercase">
+              Subscription economics
+            </p>
+            <div className="flex flex-col gap-6 md:gap-8 xl:gap-10 w-full">
+              <ChartShell
+                banner
+                hero
+                title="Gross revenue"
+                subtitle="MMR implied by active basic & premium seats (enterprise excluded until priced)."
+                yLabel="USD / month"
+                xLabel="Day (UTC)"
+                series={grossSeries}
+                stroke="#fb7185"
+                showUsdYTicks
+                dateLabels={revenueDates}
+                scrubbable
+                footerNote={
+                  grossSeries?.length >= 2
+                    ? 'Daily series (UTC). Tier-priced MMR (Basic $40/mo, Premium $150/mo). Hover or drag for date and USD.'
+                    : 'Awaiting series data.'
+                }
+              />
+              <ChartShell
+                banner
+                hero
+                title="Net revenue"
+                subtitle="After blended processing take (typically ~84–92% of gross MMR; varies by day in the model)."
+                yLabel="USD / month"
+                xLabel="Day (UTC)"
+                series={netSeries}
+                stroke="#e2e8f0"
+                showUsdYTicks
+                dateLabels={revenueDates}
+                scrubbable
+                footerNote={
+                  netSeries?.length >= 2
+                    ? 'Daily series (UTC). Net uses a day-varying fee model, so the ratio to gross is not fixed. Hover or drag for date and USD.'
+                    : 'Awaiting series data.'
+                }
+              />
+            </div>
+            {enterpriseNote ? (
+              <p className="font-mono text-xs md:text-sm text-gray-600 leading-relaxed">
+                Enterprise seats are active but not included in MMR until a contract value is on file.
+              </p>
+            ) : null}
           </div>
         </div>
 

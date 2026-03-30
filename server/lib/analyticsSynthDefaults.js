@@ -1,5 +1,6 @@
 /**
- * Public synthetic floors for dashboard + worker. MMR ≈ 400×$20 + 80×$75 = $14,000.
+ * Public synthetic floors for dashboard + worker.
+ * MMR ≈ 200×$40 + 40×$150 = $14,000 (users seed capped at 150).
  */
 export const MVM_CREATED_CAP = 100
 
@@ -7,10 +8,10 @@ export const PUBLIC_SYNTH_DEFAULTS = {
   mvm_created: 14,
   mvm_running: 11,
   cumulative_kwh_shifted: 2_180_000,
-  dashboard_users: 3200,
-  subs_basic_public: 400,
-  subs_premium_public: 80,
-  api_keys_public: 620,
+  dashboard_users: 150,
+  subs_basic_public: 200,
+  subs_premium_public: 40,
+  api_keys_public: 40,
 }
 
 export function normalizeSynthStateRow(row) {

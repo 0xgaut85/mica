@@ -508,7 +508,7 @@ export default function Whitepaper() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="border border-gray-200 p-4">
                   <p className="font-display font-light text-lg text-gray-900">Basic</p>
-                  <p className="font-display font-extralight text-2xl text-gray-900 mt-1">$20<span className="text-sm text-gray-500">/mo</span></p>
+                  <p className="font-display font-extralight text-2xl text-gray-900 mt-1">$40<span className="text-sm text-gray-500">/mo</span></p>
                   <ul className="mt-3 space-y-1 font-mono text-[11px] text-gray-600">
                     <li>1,000 API calls / month</li>
                     <li>Standard energy routing</li>
@@ -517,7 +517,7 @@ export default function Whitepaper() {
                 </div>
                 <div className="border border-red-mica/30 bg-red-mica/[0.03] p-4">
                   <p className="font-display font-light text-lg text-gray-900">Premium</p>
-                  <p className="font-display font-extralight text-2xl text-gray-900 mt-1">$75<span className="text-sm text-gray-500">/mo</span></p>
+                  <p className="font-display font-extralight text-2xl text-gray-900 mt-1">$150<span className="text-sm text-gray-500">/mo</span></p>
                   <ul className="mt-3 space-y-1 font-mono text-[11px] text-gray-600">
                     <li>25,000 API calls / month</li>
                     <li>Priority energy routing</li>
