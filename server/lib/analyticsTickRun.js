@@ -1,4 +1,4 @@
-import { mmrFromPlanCounts, netFromGrossMmrWiggled } from './analyticsRevenue.js'
+import { netFromGrossMmrWiggled } from './analyticsRevenue.js'
 import {
   enterpriseSeatsTargetForMix,
   growthProgressMs,
@@ -181,15 +181,12 @@ export async function runAnalyticsTickOnce(client) {
     ],
   )
 
-  const gross = mmrFromPlanCounts({
-    basic: subsBasicPublic,
-    premium: subsPremiumPublic,
-    enterprise: subsEnterprisePublic,
-  })
+  /** Chart series = growth target MMR (seats still crawl toward same target). */
+  const revenueGrossUsd = Math.round(Number(targetMmr) * 100) / 100
 
   const { rows: dayRows } = await client.query(`SELECT CURRENT_DATE::text AS day`)
   const dayKey = dayRows[0]?.day ?? ''
-  const net = netFromGrossMmrWiggled(gross, dayKey)
+  const net = netFromGrossMmrWiggled(revenueGrossUsd, dayKey)
 
   await client.query(
     `INSERT INTO analytics_revenue_daily (day, gross_usd, net_usd, notes)
@@ -198,7 +195,7 @@ export async function runAnalyticsTickOnce(client) {
        gross_usd = EXCLUDED.gross_usd,
        net_usd = EXCLUDED.net_usd,
        notes = 'tick'`,
-    [gross, net],
+    [revenueGrossUsd, net],
   )
 
   return {
@@ -207,7 +204,7 @@ export async function runAnalyticsTickOnce(client) {
     mvmRunning,
     mvmCreated,
     kwh: Math.round(kwh),
-    gross,
+    gross: revenueGrossUsd,
     subsBasicPublic,
     subsPremiumPublic,
     subsEnterprisePublic,

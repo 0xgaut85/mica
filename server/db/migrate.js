@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import pool from './pool.js'
 import { netFromGrossMmrWiggled } from '../lib/analyticsRevenue.js'
-import { targetMmrUsd } from '../lib/analyticsSynthGrowth.js'
+import { growthProgressMs, targetMmrUsd } from '../lib/analyticsSynthGrowth.js'
 import {
   PUBLIC_SYNTH_DEFAULTS,
   publicSyntheticMmrUsd,
@@ -273,13 +273,20 @@ async function seedAnalyticsDefaults(client) {
     [firstDayStr, todayStr],
   )
 
-  const denom = Math.max(1, growthSpan - 1)
+  /** Ramp starts UTC midnight today — past days stay at floor; today uses wall-clock progress. */
+  const growthAnchorIso = `${todayStr}T00:00:00.000Z`
+  const nowMs = Date.now()
+
   for (let i = 0; i < growthSpan; i += 1) {
     const dayMs = firstDayMs + i * 86400000
     const dayStr = new Date(dayMs).toISOString().slice(0, 10)
-    const p = i / denom
+    const progressAtMs =
+      dayStr === todayStr
+        ? nowMs
+        : Date.parse(`${dayStr}T23:59:59.999Z`)
+    const p = growthProgressMs(growthAnchorIso, growthSpan, progressAtMs)
     let gross = targetMmrUsd(mmrFloorSeed, mmrCeilSeed, p)
-    gross = Math.round((gross + Math.sin(p * Math.PI * 6) * 120) * 100) / 100
+    gross = Math.round((gross + Math.sin(p * Math.PI * 6) * 48) * 100) / 100
     gross = Math.max(mmrFloorSeed * 0.98, Math.min(mmrCeilSeed, gross))
     const net = netFromGrossMmrWiggled(gross, dayStr)
     await client.query(
@@ -288,8 +295,6 @@ async function seedAnalyticsDefaults(client) {
       [dayStr, gross, net],
     )
   }
-
-  const growthAnchorIso = `${firstDayStr}T00:00:00.000Z`
   await client.query(
     `UPDATE analytics_synthetic_state SET
        synth_mmr_floor_usd = GREATEST(

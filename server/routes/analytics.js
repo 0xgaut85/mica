@@ -249,7 +249,7 @@ router.get('/dashboard', async (_req, res, next) => {
     }
 
     const byPlanDisplay = publicStoryByPlan(byPlan, synthState)
-    const mmrUsd = mmrFromPlanCounts(byPlanDisplay)
+    const mmrUsd = Math.round(growthTargetMmr * 100) / 100
     const arrUsd = mmrUsd * 12
     const activeTotal =
       byPlanDisplay.basic + byPlanDisplay.premium + byPlanDisplay.enterprise
