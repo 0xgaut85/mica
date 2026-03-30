@@ -47,28 +47,30 @@ export async function fetchActivePlanCounts(pool) {
 
 /**
  * Dashboard / worker: MMR = Σ (seats × tier price). Public synthetic floors keep metrics non-zero until real subs dominate.
- * Enterprise is never synthetic — only real contracts.
+ * Enterprise seats can be synthetic (published row); still excluded from $ MMR until priced.
  */
 export function mergePublicSubscriptionCounts(realByPlan, synthRow) {
   const sb = Number(synthRow?.subs_basic_public)
   const sp = Number(synthRow?.subs_premium_public)
+  const se = Number(synthRow?.subs_enterprise_public)
   const floorB = Number.isFinite(sb) && sb >= 0 ? sb : 0
   const floorP = Number.isFinite(sp) && sp >= 0 ? sp : 0
+  const floorE = Number.isFinite(se) && se >= 0 ? se : 0
   return {
     basic: Math.max(realByPlan.basic ?? 0, floorB),
     premium: Math.max(realByPlan.premium ?? 0, floorP),
-    enterprise: realByPlan.enterprise ?? 0,
+    enterprise: Math.max(realByPlan.enterprise ?? 0, floorE),
   }
 }
 
 /**
- * Public dashboard story: Basic/Premium from normalized synthetic row; Enterprise from DB only.
- * (Avoids test DB rows like thousands of “basic” subs blowing up the published dashboard.)
+ * Public dashboard story: Basic, Premium, and Enterprise from normalized synthetic row (worker-maintained).
+ * `realByPlan` is unused for display but kept for call-site symmetry with registered counts.
  */
-export function publicStoryByPlan(realByPlan, synthState) {
+export function publicStoryByPlan(_realByPlan, synthState) {
   return {
     basic: synthState.subs_basic_public,
     premium: synthState.subs_premium_public,
-    enterprise: realByPlan?.enterprise ?? 0,
+    enterprise: synthState.subs_enterprise_public,
   }
 }

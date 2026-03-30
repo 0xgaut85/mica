@@ -2,31 +2,41 @@ import { PLAN_PRICES } from './planPrices.js'
 
 /**
  * Public synthetic floors for dashboard + worker.
- * Seat story: Basic 400 + Premium 81 (+ Enterprise from DB). Account count: dashboard_users (211).
- * API keys published = round(1.5 × dashboard users).
+ * Published “active users” = basic + premium + enterprise seats (same as subscription card total).
+ * API keys published = round(1.5 × that total).
  */
 export const MVM_CREATED_CAP = 100
 
 /** First calendar day of seeded `analytics_revenue_daily` (UTC); dashboard uses max(anchor, rolling 90d). */
 export const REVENUE_DAILY_SERIES_START = '2026-03-30'
 
-/** Published “accounts” count (distinct from paid seat totals). */
-export const PUBLIC_DASHBOARD_USERS_SEED = 211
+const _SUBS_BASIC_FLOOR = 400
+const _SUBS_PREMIUM_FLOOR = 81
 
-/** API key count = 1.5× user count (rounded). */
+/** Published enterprise seats (worker grows toward ~10% of total; basic+premium ~90%). */
+export const PUBLIC_ENTERPRISE_SEATS_FLOOR = 4
+/** Target share of total seats (basic + premium + enterprise). */
+export const PUBLIC_ENTERPRISE_SEAT_SHARE = 0.1
+
+/** API key count = 1.5× active seat total (rounded). */
 export function apiKeysForUsers(userCount) {
   const u = Math.max(0, Math.round(Number(userCount) || 0))
   return Math.round(u * 1.5)
 }
 
+const _SEAT_TOTAL_FLOOR =
+  _SUBS_BASIC_FLOOR + _SUBS_PREMIUM_FLOOR + PUBLIC_ENTERPRISE_SEATS_FLOOR
+
 export const PUBLIC_SYNTH_DEFAULTS = {
   mvm_created: 14,
   mvm_running: 11,
   cumulative_kwh_shifted: 2_180_000,
-  dashboard_users: PUBLIC_DASHBOARD_USERS_SEED,
-  subs_basic_public: 400,
-  subs_premium_public: 81,
-  api_keys_public: apiKeysForUsers(PUBLIC_DASHBOARD_USERS_SEED),
+  subs_basic_public: _SUBS_BASIC_FLOOR,
+  subs_premium_public: _SUBS_PREMIUM_FLOOR,
+  subs_enterprise_public: PUBLIC_ENTERPRISE_SEATS_FLOOR,
+  /** Stored row = basic + premium + synthetic enterprise. */
+  dashboard_users: _SEAT_TOTAL_FLOOR,
+  api_keys_public: apiKeysForUsers(_SEAT_TOTAL_FLOOR),
 }
 
 /** Tier MMR implied by public synthetic seat floors (stays in sync with PLAN_PRICES). */
@@ -62,6 +72,8 @@ export function normalizeSynthStateRow(row) {
   const rawKeys = Number(row.api_keys_public) || 0
   const rawB = Number(row.subs_basic_public) || 0
   const rawP = Number(row.subs_premium_public) || 0
+  const rawE = Number(row.subs_enterprise_public)
+  const rawEsafe = Number.isFinite(rawE) ? rawE : 0
   const corruptUsers = rawUsers > SYNTH_USERS_CORRUPT_THRESHOLD
   const corruptSubs =
     rawB > SYNTH_SUBS_BASIC_CORRUPT_THRESHOLD ||
@@ -71,15 +83,21 @@ export function normalizeSynthStateRow(row) {
   const keysBase = corrupt ? d.api_keys_public : rawKeys
   const subsBBase = corruptSubs ? d.subs_basic_public : rawB
   const subsPBase = corruptSubs ? d.subs_premium_public : rawP
-  const dashboardUsers = Math.max(usersBase, d.dashboard_users)
+  const subsEBase = corruptSubs ? d.subs_enterprise_public : rawEsafe
+  const sb = Math.max(subsBBase, d.subs_basic_public)
+  const sp = Math.max(subsPBase, d.subs_premium_public)
+  const se = Math.max(subsEBase, d.subs_enterprise_public)
+  const seatFloor = sb + sp + se
+  let dashboardUsers = Math.max(usersBase, d.dashboard_users, seatFloor)
   return {
     mvm_created: created,
     mvm_running: running,
     cumulative_kwh_shifted:
       Number(row.cumulative_kwh_shifted) || d.cumulative_kwh_shifted,
     dashboard_users: dashboardUsers,
-    subs_basic_public: Math.max(subsBBase, d.subs_basic_public),
-    subs_premium_public: Math.max(subsPBase, d.subs_premium_public),
+    subs_basic_public: sb,
+    subs_premium_public: sp,
+    subs_enterprise_public: se,
     api_keys_public: Math.max(keysBase, d.api_keys_public, apiKeysForUsers(dashboardUsers)),
   }
 }

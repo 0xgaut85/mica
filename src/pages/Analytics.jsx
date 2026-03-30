@@ -723,14 +723,14 @@ export default function Analytics() {
                   large
                   metricId="users"
                   label="Active users"
-                  sublabel="Basic + Premium + Enterprise seats"
+                  sublabel="Matches total active (Basic + Premium + Enterprise)"
                   value={status === 'ready' ? String(dash.users) : undefined}
                 />
                 <KpiTile
                   large
                   metricId="api-keys"
                   label="API keys"
-                  sublabel="Active (non-revoked) · ≈1.5× users"
+                  sublabel="Published count · ≈1.5× active seats"
                   value={status === 'ready' ? String(dash.apiKeysActive) : undefined}
                 />
               </div>
@@ -753,7 +753,7 @@ export default function Analytics() {
                   large
                   metricId="seats-enterprise"
                   label="Enterprise"
-                  sublabel="Active seats · contract"
+                  sublabel="Active seats · ~10% of total (contract)"
                   value={status === 'ready' && seatEnterprise != null ? String(seatEnterprise) : undefined}
                 />
               </div>

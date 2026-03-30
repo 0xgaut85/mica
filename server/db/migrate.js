@@ -45,10 +45,11 @@ CREATE TABLE IF NOT EXISTS analytics_synthetic_state (
   mvm_created INT NOT NULL DEFAULT 14,
   mvm_running INT NOT NULL DEFAULT 11,
   cumulative_kwh_shifted DOUBLE PRECISION NOT NULL DEFAULT 2180000,
-  dashboard_users INT NOT NULL DEFAULT 211,
+  dashboard_users INT NOT NULL DEFAULT 485,
   subs_basic_public INT NOT NULL DEFAULT 400,
   subs_premium_public INT NOT NULL DEFAULT 81,
-  api_keys_public INT NOT NULL DEFAULT 317,
+  subs_enterprise_public INT NOT NULL DEFAULT 4,
+  api_keys_public INT NOT NULL DEFAULT 728,
   synth_mmr_floor_usd NUMERIC(14,2) NOT NULL DEFAULT 28150,
   synth_mmr_ceiling_usd NUMERIC(14,2) NOT NULL DEFAULT 110000,
   synth_growth_days INT NOT NULL DEFAULT 15,
@@ -66,13 +67,15 @@ ALTER TABLE analytics_synthetic_state
   ADD COLUMN IF NOT EXISTS synth_growth_start_at TIMESTAMPTZ;
 
 ALTER TABLE analytics_synthetic_state
-  ADD COLUMN IF NOT EXISTS dashboard_users INT NOT NULL DEFAULT 211;
+  ADD COLUMN IF NOT EXISTS dashboard_users INT NOT NULL DEFAULT 485;
 ALTER TABLE analytics_synthetic_state
   ADD COLUMN IF NOT EXISTS subs_basic_public INT NOT NULL DEFAULT 400;
 ALTER TABLE analytics_synthetic_state
   ADD COLUMN IF NOT EXISTS subs_premium_public INT NOT NULL DEFAULT 81;
 ALTER TABLE analytics_synthetic_state
-  ADD COLUMN IF NOT EXISTS api_keys_public INT NOT NULL DEFAULT 317;
+  ADD COLUMN IF NOT EXISTS subs_enterprise_public INT NOT NULL DEFAULT 4;
+ALTER TABLE analytics_synthetic_state
+  ADD COLUMN IF NOT EXISTS api_keys_public INT NOT NULL DEFAULT 728;
 
 CREATE TABLE IF NOT EXISTS analytics_revenue_daily (
   day DATE PRIMARY KEY,
@@ -95,9 +98,9 @@ async function seedAnalyticsDefaults(client) {
   await client.query(
     `INSERT INTO analytics_synthetic_state (
        id, mvm_created, mvm_running, cumulative_kwh_shifted, dashboard_users,
-       subs_basic_public, subs_premium_public, api_keys_public
+       subs_basic_public, subs_premium_public, subs_enterprise_public, api_keys_public
      )
-     VALUES (1, $1, $2, $3, $4, $5, $6, $7)
+     VALUES (1, $1, $2, $3, $4, $5, $6, $7, $8)
      ON CONFLICT (id) DO NOTHING`,
     [
       d.mvm_created,
@@ -106,6 +109,7 @@ async function seedAnalyticsDefaults(client) {
       d.dashboard_users,
       d.subs_basic_public,
       d.subs_premium_public,
+      d.subs_enterprise_public,
       d.api_keys_public,
     ],
   )
@@ -113,13 +117,15 @@ async function seedAnalyticsDefaults(client) {
     `UPDATE analytics_synthetic_state SET
        subs_basic_public = GREATEST(subs_basic_public, $1),
        subs_premium_public = GREATEST(subs_premium_public, $2),
-       api_keys_public = GREATEST(api_keys_public, $3),
-       dashboard_users = GREATEST(dashboard_users, $4),
-       cumulative_kwh_shifted = GREATEST(cumulative_kwh_shifted, $5)
+       subs_enterprise_public = GREATEST(subs_enterprise_public, $3),
+       api_keys_public = GREATEST(api_keys_public, $4),
+       dashboard_users = GREATEST(dashboard_users, $5),
+       cumulative_kwh_shifted = GREATEST(cumulative_kwh_shifted, $6)
      WHERE id = 1`,
     [
       d.subs_basic_public,
       d.subs_premium_public,
+      d.subs_enterprise_public,
       d.api_keys_public,
       d.dashboard_users,
       d.cumulative_kwh_shifted,
@@ -137,10 +143,17 @@ async function seedAnalyticsDefaults(client) {
     `UPDATE analytics_synthetic_state SET
        subs_basic_public = $1,
        subs_premium_public = $2,
-       dashboard_users = $3,
-       api_keys_public = $4
+       subs_enterprise_public = $3,
+       dashboard_users = $4,
+       api_keys_public = $5
      WHERE id = 1 AND (subs_basic_public > 2000 OR subs_premium_public > 500)`,
-    [d.subs_basic_public, d.subs_premium_public, d.dashboard_users, d.api_keys_public],
+    [
+      d.subs_basic_public,
+      d.subs_premium_public,
+      d.subs_enterprise_public,
+      d.dashboard_users,
+      d.api_keys_public,
+    ],
   )
   await client.query(
     `UPDATE analytics_synthetic_state SET
@@ -164,6 +177,21 @@ async function seedAnalyticsDefaults(client) {
        synth_growth_days = CASE WHEN synth_growth_days < 1 THEN 15 ELSE synth_growth_days END
      WHERE id = 1`,
     [mmrFloorSeed],
+  )
+
+  /** Keep stored `dashboard_users` = published basic + premium + synthetic enterprise. */
+  await client.query(
+    `UPDATE analytics_synthetic_state SET
+       dashboard_users = subs_basic_public + subs_premium_public + subs_enterprise_public
+     WHERE id = 1`,
+  )
+  await client.query(
+    `UPDATE analytics_synthetic_state SET
+       api_keys_public = GREATEST(
+         api_keys_public,
+         ROUND(dashboard_users::numeric * 1.5)::int
+       )
+     WHERE id = 1`,
   )
 
   const regions = [

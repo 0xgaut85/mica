@@ -1,4 +1,8 @@
 import { PLAN_PRICES } from './planPrices.js'
+import {
+  PUBLIC_ENTERPRISE_SEATS_FLOOR,
+  PUBLIC_ENTERPRISE_SEAT_SHARE,
+} from './analyticsSynthDefaults.js'
 
 /** Linear trajectory MMR (USD) from floor to ceiling over growth window. */
 export function growthProgressMs(startAt, growthDays, nowMs = Date.now()) {
@@ -37,6 +41,20 @@ export function seatsForTargetMmr(targetUsd) {
     }
   }
   return { basic: bestB, premium: bestP }
+}
+
+/**
+ * Enterprise seat target so enterprise / (basic + premium + enterprise) ≈ PUBLIC_ENTERPRISE_SEAT_SHARE
+ * (basic+premium ≈ 90% when share is 0.1). Respects a floor (e.g. 4).
+ */
+export function enterpriseSeatsTargetForMix(basic, premium) {
+  const b = Math.max(0, Math.round(Number(basic) || 0))
+  const p = Math.max(0, Math.round(Number(premium) || 0))
+  const bp = b + p
+  const f = PUBLIC_ENTERPRISE_SEAT_SHARE
+  if (bp <= 0) return PUBLIC_ENTERPRISE_SEATS_FLOOR
+  const target = Math.round((bp * f) / (1 - f))
+  return Math.max(PUBLIC_ENTERPRISE_SEATS_FLOOR, target)
 }
 
 /**

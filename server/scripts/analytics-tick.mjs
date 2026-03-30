@@ -21,7 +21,7 @@ async function main() {
     const out = await runAnalyticsTickOnce(client)
     await client.query('COMMIT')
     console.log(
-      `analytics-tick: ok users~${out.dashboardUsers} keys~${out.apiKeysPublic} mvm ${out.mvmRunning}/${out.mvmCreated} kwh~${out.kwh} mmr=${out.gross} subs ${out.subsBasicPublic}/${out.subsPremiumPublic} prog=${(out.progress * 100).toFixed(2)}% tgt~${Math.round(out.targetMmr)}`,
+      `analytics-tick: ok users~${out.dashboardUsers} keys~${out.apiKeysPublic} mvm ${out.mvmRunning}/${out.mvmCreated} kwh~${out.kwh} mmr=${out.gross} subs ${out.subsBasicPublic}/${out.subsPremiumPublic}/e${out.subsEnterprisePublic} prog=${(out.progress * 100).toFixed(2)}% tgt~${Math.round(out.targetMmr)}`,
     )
   } catch (e) {
     await client.query('ROLLBACK')

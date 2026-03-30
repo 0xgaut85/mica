@@ -162,7 +162,8 @@ router.get('/subscription-revenue', async (_req, res, next) => {
     const [byPlan, synthR] = await Promise.all([
       fetchActivePlanCounts(pool),
       pool.query(
-        `SELECT subs_basic_public, subs_premium_public FROM analytics_synthetic_state WHERE id = 1`,
+        `SELECT subs_basic_public, subs_premium_public, subs_enterprise_public
+         FROM analytics_synthetic_state WHERE id = 1`,
       ),
     ])
     const synthState = normalizeSynthStateRow(synthR.rows[0])
@@ -193,7 +194,7 @@ router.get('/dashboard', async (_req, res, next) => {
       ),
       pool.query(
         `SELECT mvm_created, mvm_running, cumulative_kwh_shifted, dashboard_users,
-                subs_basic_public, subs_premium_public, api_keys_public,
+                subs_basic_public, subs_premium_public, subs_enterprise_public, api_keys_public,
                 synth_mmr_floor_usd, synth_mmr_ceiling_usd, synth_growth_days, synth_growth_start_at
          FROM analytics_synthetic_state WHERE id = 1`,
       ),
@@ -236,7 +237,6 @@ router.get('/dashboard', async (_req, res, next) => {
     const dashboardUsersFloor = synthState.dashboard_users
     const realUsers = usersR.rows[0]?.n ?? 0
     const realKeys = keysR.rows[0]?.n ?? 0
-    const apiKeysDisplayed = apiKeysForUsers(synthState.dashboard_users)
 
     const env = computeEnvironmentFromKwh(cumulativeKwh)
     const dates = []
@@ -255,8 +255,9 @@ router.get('/dashboard', async (_req, res, next) => {
     const activeTotal =
       byPlanDisplay.basic + byPlanDisplay.premium + byPlanDisplay.enterprise
     const enterpriseExcludedFromMmr = byPlanDisplay.enterprise > 0
-    /** Account count (synthetic row); seat totals are subscriptionRevenue.activeTotal. */
-    const usersDisplayed = synthState.dashboard_users
+    /** Active users tile = same number as “Total active” (sum of seats). */
+    const usersDisplayed = activeTotal
+    const apiKeysDisplayed = apiKeysForUsers(activeTotal)
 
     const electricityByRegion = mergeElectricityWithLive(elecR.rows, liveSnapshot)
     const electricityComparison = buildElectricityComparison(electricityByRegion, elecR.rows)
