@@ -7,8 +7,31 @@ import { PLAN_PRICES } from './planPrices.js'
  */
 export const MVM_CREATED_CAP = 100
 
-/** First calendar day of seeded `analytics_revenue_daily` (UTC); dashboard uses max(anchor, rolling 90d). */
-export const REVENUE_DAILY_SERIES_START = '2026-03-30'
+/** Growth window length (days) for floor → ceiling MMR and linked synth metrics. */
+export const SYNTH_GROWTH_DAYS_DEFAULT = 14
+
+/** MMR ceiling (USD) the worker approaches over the growth window. */
+export const SYNTH_MMR_CEILING_USD_DEFAULT = 110_000
+
+/** When created MVM reaches cap, target running ≈ this fraction (e.g. 0.9 → 90 running at 100 created). */
+export const MVM_RUNNING_FRAC_OF_CREATED = 0.9
+
+/**
+ * First day shown on revenue charts (UTC): yesterday so gross/net series start “today” with a prior point.
+ */
+export function revenueChartQueryStartDateUtc(now = new Date()) {
+  const d = new Date(now)
+  d.setUTCHours(0, 0, 0, 0)
+  d.setUTCDate(d.getUTCDate() - 1)
+  return d.toISOString().slice(0, 10)
+}
+
+/** UTC calendar date string (YYYY-MM-DD) for `now`. */
+export function utcDateString(now = new Date()) {
+  const d = new Date(now)
+  d.setUTCHours(0, 0, 0, 0)
+  return d.toISOString().slice(0, 10)
+}
 
 const _SUBS_BASIC_FLOOR = 400
 const _SUBS_PREMIUM_FLOOR = 81

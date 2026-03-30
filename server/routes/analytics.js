@@ -14,22 +14,16 @@ import {
   apiKeysForUsers,
   normalizeSynthStateRow,
   publicSyntheticMmrUsd,
-  REVENUE_DAILY_SERIES_START,
+  revenueChartQueryStartDateUtc,
+  SYNTH_GROWTH_DAYS_DEFAULT,
+  SYNTH_MMR_CEILING_USD_DEFAULT,
 } from '../lib/analyticsSynthDefaults.js'
 import { growthProgressMs, targetMmrUsd } from '../lib/analyticsSynthGrowth.js'
 
 const router = Router()
 
-const REVENUE_SERIES_DAYS = 90
-
 function revenueSeriesQueryStartUtc() {
-  const anchorMs = Date.parse(`${REVENUE_DAILY_SERIES_START}T00:00:00.000Z`)
-  const today = new Date()
-  today.setUTCHours(0, 0, 0, 0)
-  const rolling = new Date(today)
-  rolling.setUTCDate(rolling.getUTCDate() - (REVENUE_SERIES_DAYS - 1))
-  const start = rolling.getTime() < anchorMs ? new Date(anchorMs) : rolling
-  return start.toISOString().slice(0, 10)
+  return revenueChartQueryStartDateUtc()
 }
 
 const ANALYTICS_API_META = {
@@ -226,8 +220,10 @@ router.get('/dashboard', async (_req, res, next) => {
     const synthState = normalizeSynthStateRow(rawSynth)
     const synthMmrBaseline = publicSyntheticMmrUsd(synthState)
     const mmrFloor = Number(rawSynth?.synth_mmr_floor_usd) || synthMmrBaseline
-    const mmrCeil = Number(rawSynth?.synth_mmr_ceiling_usd) || 110000
-    const growthDays = Number(rawSynth?.synth_growth_days) || 15
+    const mmrCeil =
+      Number(rawSynth?.synth_mmr_ceiling_usd) || SYNTH_MMR_CEILING_USD_DEFAULT
+    const growthDays =
+      Number(rawSynth?.synth_growth_days) || SYNTH_GROWTH_DAYS_DEFAULT
     const growthStartAt = rawSynth?.synth_growth_start_at
     const growthProgress = growthProgressMs(growthStartAt, growthDays)
     const growthTargetMmr = targetMmrUsd(mmrFloor, mmrCeil, growthProgress)

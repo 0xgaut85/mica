@@ -11,8 +11,11 @@ import {
 import {
   apiKeysForUsers,
   MVM_CREATED_CAP,
+  MVM_RUNNING_FRAC_OF_CREATED,
   PUBLIC_SYNTH_DEFAULTS,
   publicSyntheticMmrUsd,
+  SYNTH_GROWTH_DAYS_DEFAULT,
+  SYNTH_MMR_CEILING_USD_DEFAULT,
 } from './analyticsSynthDefaults.js'
 
 function randomChance(p) {
@@ -72,7 +75,8 @@ export async function runAnalyticsTickOnce(client) {
   }
 
   const mmrFloor = Number(st.synth_mmr_floor_usd) || publicSyntheticMmrUsd()
-  const mmrCeil = Number(st.synth_mmr_ceiling_usd) || 110000
+  const mmrCeil =
+    Number(st.synth_mmr_ceiling_usd) || SYNTH_MMR_CEILING_USD_DEFAULT
   const growthDays = Number(st.synth_growth_days) || 15
   const growthStart = st.synth_growth_start_at
 
@@ -92,10 +96,9 @@ export async function runAnalyticsTickOnce(client) {
   const mvmTargetCreated = Math.round(
     d.mvm_created + progress * (MVM_CREATED_CAP - d.mvm_created),
   )
-  const runFrac = clamp(0.74 + Math.random() * 0.1, 0.65, 0.92)
   const mvmTargetRunning = Math.min(
     mvmTargetCreated,
-    Math.round(mvmTargetCreated * runFrac),
+    Math.round(mvmTargetCreated * MVM_RUNNING_FRAC_OF_CREATED),
   )
 
   let mvmCreated = Number(st.mvm_created) || d.mvm_created

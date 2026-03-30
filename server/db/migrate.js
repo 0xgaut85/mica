@@ -4,7 +4,10 @@ import { NET_REVENUE_FRACTION } from '../lib/analyticsRevenue.js'
 import {
   PUBLIC_SYNTH_DEFAULTS,
   publicSyntheticMmrUsd,
-  REVENUE_DAILY_SERIES_START,
+  revenueChartQueryStartDateUtc,
+  SYNTH_GROWTH_DAYS_DEFAULT,
+  SYNTH_MMR_CEILING_USD_DEFAULT,
+  utcDateString,
 } from '../lib/analyticsSynthDefaults.js'
 
 const SQL = `
@@ -52,7 +55,7 @@ CREATE TABLE IF NOT EXISTS analytics_synthetic_state (
   api_keys_public INT NOT NULL DEFAULT 728,
   synth_mmr_floor_usd NUMERIC(14,2) NOT NULL DEFAULT 28150,
   synth_mmr_ceiling_usd NUMERIC(14,2) NOT NULL DEFAULT 110000,
-  synth_growth_days INT NOT NULL DEFAULT 15,
+  synth_growth_days INT NOT NULL DEFAULT 14,
   synth_growth_start_at TIMESTAMPTZ,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -62,9 +65,12 @@ ALTER TABLE analytics_synthetic_state
 ALTER TABLE analytics_synthetic_state
   ADD COLUMN IF NOT EXISTS synth_mmr_ceiling_usd NUMERIC(14,2) NOT NULL DEFAULT 110000;
 ALTER TABLE analytics_synthetic_state
-  ADD COLUMN IF NOT EXISTS synth_growth_days INT NOT NULL DEFAULT 15;
+  ADD COLUMN IF NOT EXISTS synth_growth_days INT NOT NULL DEFAULT 14;
 ALTER TABLE analytics_synthetic_state
   ADD COLUMN IF NOT EXISTS synth_growth_start_at TIMESTAMPTZ;
+
+ALTER TABLE analytics_synthetic_state
+  ALTER COLUMN synth_growth_days SET DEFAULT 14;
 
 ALTER TABLE analytics_synthetic_state
   ADD COLUMN IF NOT EXISTS dashboard_users INT NOT NULL DEFAULT 485;
@@ -137,7 +143,11 @@ async function seedAnalyticsDefaults(client) {
        api_keys_public = $2,
        synth_growth_start_at = $3::timestamptz
      WHERE id = 1 AND dashboard_users > 2200`,
-    [d.dashboard_users, d.api_keys_public, `${REVENUE_DAILY_SERIES_START}T00:00:00Z`],
+    [
+      d.dashboard_users,
+      d.api_keys_public,
+      `${revenueChartQueryStartDateUtc()}T00:00:00.000Z`,
+    ],
   )
   await client.query(
     `UPDATE analytics_synthetic_state SET
@@ -173,10 +183,14 @@ async function seedAnalyticsDefaults(client) {
     `UPDATE analytics_synthetic_state SET
        synth_growth_start_at = COALESCE(synth_growth_start_at, now()),
        synth_mmr_floor_usd = COALESCE(NULLIF(synth_mmr_floor_usd, 0), $1),
-       synth_mmr_ceiling_usd = COALESCE(NULLIF(synth_mmr_ceiling_usd, 0), 110000),
-       synth_growth_days = CASE WHEN synth_growth_days < 1 THEN 15 ELSE synth_growth_days END
+       synth_mmr_ceiling_usd = COALESCE(NULLIF(synth_mmr_ceiling_usd, 0), $2),
+       synth_growth_days = CASE
+         WHEN synth_growth_days < 1 THEN $3
+         WHEN synth_growth_days > $3 THEN $3
+         ELSE synth_growth_days
+       END
      WHERE id = 1`,
-    [mmrFloorSeed],
+    [mmrFloorSeed, SYNTH_MMR_CEILING_USD_DEFAULT, SYNTH_GROWTH_DAYS_DEFAULT],
   )
 
   /** Keep stored `dashboard_users` = published basic + premium + synthetic enterprise. */
@@ -233,44 +247,63 @@ async function seedAnalyticsDefaults(client) {
     ],
   )
 
-  const { rows: maxRow } = await client.query(
-    `SELECT COALESCE(MAX(gross_usd), 0)::numeric AS m FROM analytics_revenue_daily`,
-  )
-  const { rows: minDayRow } = await client.query(`SELECT MIN(day) AS d FROM analytics_revenue_daily`)
-  const maxGross = Number(maxRow[0]?.m) || 0
-  const rawMin = minDayRow[0]?.d
-  const minDayStr =
-    rawMin == null
-      ? null
-      : typeof rawMin === 'string'
-        ? rawMin.slice(0, 10)
-        : rawMin instanceof Date
-          ? rawMin.toISOString().slice(0, 10)
-          : String(rawMin).slice(0, 10)
-  /** Reseed when empty or first row is not the configured anchor (e.g. 2026-01-01). */
-  const needsRevenueReseed = !minDayStr || minDayStr !== REVENUE_DAILY_SERIES_START
   const mmrTargetSeed = publicSyntheticMmrUsd(PUBLIC_SYNTH_DEFAULTS)
-  if (!needsRevenueReseed && maxGross > 0 && maxGross >= mmrTargetSeed * 0.96) return
+  const chartStart = revenueChartQueryStartDateUtc()
+  const todayStr = utcDateString()
+  const growthAnchorIso = `${chartStart}T00:00:00.000Z`
 
-  await client.query(`DELETE FROM analytics_revenue_daily`)
+  const { rowCount: pruned } = await client.query(
+    `DELETE FROM analytics_revenue_daily WHERE day < $1::date`,
+    [chartStart],
+  )
+  const prunedOld = (pruned ?? 0) > 0
 
-  const startMs = Date.parse(`${REVENUE_DAILY_SERIES_START}T00:00:00.000Z`)
-  const grossStart = 3200
+  const { rows: countBeforeRows } = await client.query(
+    `SELECT COUNT(*)::int AS n FROM analytics_revenue_daily`,
+  )
+  const countBefore = Number(countBeforeRows[0]?.n) || 0
+
+  const startMs = Date.parse(`${chartStart}T00:00:00.000Z`)
+  const endMs = Date.parse(`${todayStr}T00:00:00.000Z`)
+  const spanDays = Math.max(1, Math.round((endMs - startMs) / 86400000) + 1)
+  const grossStart = Math.round(mmrTargetSeed * 0.88 * 100) / 100
   const grossEnd = mmrTargetSeed
-  for (let i = 0; i < 90; i += 1) {
+
+  for (let i = 0; i < spanDays; i += 1) {
     const dayDate = new Date(startMs + i * 86400000)
     const dayStr = dayDate.toISOString().slice(0, 10)
-    const t = i / 89
+    const t = spanDays <= 1 ? 1 : i / (spanDays - 1)
     const gross =
-      Math.round((grossStart + t * (grossEnd - grossStart) + Math.sin(t * Math.PI * 6) * 48) * 100) / 100
+      Math.round(
+        (grossStart + t * (grossEnd - grossStart) + Math.sin(t * Math.PI * 6) * 36) * 100,
+      ) / 100
     const baseNet = gross * NET_REVENUE_FRACTION
     const netWiggle =
-      Math.round((baseNet - 26 + Math.sin(t * Math.PI * 4 + 0.9) * 34) * 100) / 100
+      Math.round((baseNet - 22 + Math.sin(t * Math.PI * 4 + 0.9) * 28) * 100) / 100
     const net = Math.min(netWiggle, gross - 55)
     await client.query(
       `INSERT INTO analytics_revenue_daily (day, gross_usd, net_usd, notes)
-       VALUES ($1::date, $2, $3, 'seed')`,
+       VALUES ($1::date, $2, $3, 'seed')
+       ON CONFLICT (day) DO NOTHING`,
       [dayStr, gross, net],
+    )
+  }
+
+  const { rows: countAfterRows } = await client.query(
+    `SELECT COUNT(*)::int AS n FROM analytics_revenue_daily`,
+  )
+  const countAfter = Number(countAfterRows[0]?.n) || 0
+  const filledGaps = countAfter > countBefore
+
+  /** New chart epoch when old history was dropped or seed filled missing days (not overwriting tick rows). */
+  if (prunedOld || filledGaps) {
+    await client.query(
+      `UPDATE analytics_synthetic_state SET
+         synth_growth_days = $1,
+         synth_mmr_ceiling_usd = $2,
+         synth_growth_start_at = $3::timestamptz
+       WHERE id = 1`,
+      [SYNTH_GROWTH_DAYS_DEFAULT, SYNTH_MMR_CEILING_USD_DEFAULT, growthAnchorIso],
     )
   }
 }

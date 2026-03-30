@@ -29,7 +29,7 @@ async function tickLoop() {
     await client.query('COMMIT')
     console.log(
       new Date().toISOString(),
-      `analytics-worker: users~${out.dashboardUsers} keys~${out.apiKeysPublic} mvm ${out.mvmRunning}/${out.mvmCreated} mmr=${out.gross} prog=${(out.progress * 100).toFixed(1)}%`,
+      `analytics-worker: users~${out.dashboardUsers} keys~${out.apiKeysPublic} mvm ${out.mvmRunning}/${out.mvmCreated} subs ${out.subsBasicPublic}/${out.subsPremiumPublic}/e${out.subsEnterprisePublic} mmr=${out.gross} prog=${(out.progress * 100).toFixed(1)}%`,
     )
   } catch (e) {
     await client.query('ROLLBACK')
