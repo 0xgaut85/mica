@@ -31,7 +31,7 @@
     .canvas-bg {
       position: absolute;
       inset: 0;
-      background: url('brain.jpeg') center/cover no-repeat;
+      background: url('car.jpeg') center/cover no-repeat;
       z-index: 0;
     }
 
@@ -41,8 +41,8 @@
       left: 512px;
       width: 896px;
       height: 544px;
-      background: url('brain.jpeg') -512px -268px / 1920px 1080px no-repeat;
-      filter: blur(8px);
+      background: url('car.jpeg') -512px -268px / 1920px 1080px no-repeat;
+      filter: blur(6.8px);
       border: 1px solid rgba(255, 255, 255, 0.25);
       z-index: 2;
     }
@@ -111,9 +111,11 @@
       transform: translate(-50%, -50%);
       z-index: 10;
       font-family: 'Inter', sans-serif;
+      font-optical-sizing: auto;
       font-weight: 100;
       font-size: 72px;
-      letter-spacing: 0.02em;
+      line-height: 1;
+      letter-spacing: -0.04em;
       color: #ffffff;
       text-decoration: none;
       -webkit-font-smoothing: antialiased;
@@ -128,11 +130,13 @@
       left: 48px;
       z-index: 10;
       font-family: 'Inter', sans-serif;
+      font-optical-sizing: auto;
       font-weight: 100;
       font-size: 104px;
-      font-style: italic;
+      font-style: normal;
+      line-height: 1;
+      letter-spacing: -0.04em;
       color: #ffffff;
-      letter-spacing: 0.02em;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
@@ -181,8 +185,8 @@
     <div class="logo-tr">
       <img src="ourlogo.png" alt="Mica">
     </div>
-    <a href="https://mica.energy/careers" target="_blank" rel="noopener" class="mica-brand">mica.energy/careers</a>
-    <span class="btn-cta">mica is hiring<span class="btn-cta-accent" aria-hidden="true"></span></span>
+    <a href="https://mica.energy/whitepaper" target="_blank" rel="noopener" class="mica-brand">mica.energy/whitepaper</a>
+    <span class="btn-cta">learn more about mica<span class="btn-cta-accent" aria-hidden="true"></span></span>
   </div>
 </body>
 </html>

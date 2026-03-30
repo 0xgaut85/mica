@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node --watch index.js",
     "start": "node index.js",
-    "db:migrate": "node db/migrate.js"
+    "db:migrate": "node db/migrate.js",
+    "analytics:tick": "node scripts/analytics-tick.mjs"
   },
   "dependencies": {
     "cors": "^2.8.5",

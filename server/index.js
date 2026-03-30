@@ -6,6 +6,7 @@ import authRouter from './routes/auth.js'
 import profileRouter from './routes/profile.js'
 import subscriptionRouter from './routes/subscription.js'
 import apiKeysRouter from './routes/apikeys.js'
+import analyticsRouter from './routes/analytics.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -18,6 +19,7 @@ app.use('/api/auth', authRouter)
 app.use('/api/profile', profileRouter)
 app.use('/api/subscription', subscriptionRouter)
 app.use('/api/keys', apiKeysRouter)
+app.use('/api/analytics', analyticsRouter)
 
 app.get('/api/health', (_req, res) => res.json({ ok: true }))
 

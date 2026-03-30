@@ -113,6 +113,19 @@ export default function VerticalNav() {
           transition={{ delay: 0.8 + (SECTIONS.length + 2) * 0.12, duration: 0.5 }}
         >
           <Link
+            to="/analytics"
+            className="writing-vertical font-mono text-[10px] tracking-[0.2em] cursor-pointer relative group py-2 text-black hover:text-red-mica transition-colors duration-200 block"
+          >
+            Analytics
+            <span className="absolute left-0 bottom-0 h-0 w-[1px] bg-red-mica transition-all duration-300 ease-out group-hover:h-full" />
+          </Link>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.8 + (SECTIONS.length + 3) * 0.12, duration: 0.5 }}
+        >
+          <Link
             to="/app"
             className="writing-vertical font-mono text-[10px] tracking-[0.2em] cursor-pointer relative group py-2 text-red-mica hover:text-black transition-colors duration-200 block font-bold"
           >

@@ -7,6 +7,7 @@ import Landing from './pages/Landing'
 import Careers from './pages/Careers'
 import UseMicaApp from './pages/UseMicaApp'
 import Whitepaper from './pages/Whitepaper'
+import Analytics from './pages/Analytics'
 import { LegalDocsProvider } from './context/LegalDocsContext'
 
 export default function App() {
@@ -22,6 +23,7 @@ export default function App() {
                 <Route path="/" element={<Landing />} />
                 <Route path="/careers" element={<Careers />} />
                 <Route path="/whitepaper" element={<Whitepaper />} />
+                <Route path="/analytics" element={<Analytics />} />
                 <Route path="/app/*" element={<UseMicaApp />} />
               </Routes>
               {/*

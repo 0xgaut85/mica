@@ -56,6 +56,12 @@ export default function MobileDock() {
           Paper
         </Link>
         <Link
+          to="/analytics"
+          className="flex-1 text-center font-mono text-[8px] tracking-[0.14em] uppercase py-2.5 text-black/70 hover:text-red-mica active:text-red-mica transition-colors duration-200"
+        >
+          Stats
+        </Link>
+        <Link
           to="/app"
           className="flex-1 text-center font-mono text-[9px] tracking-[0.18em] uppercase py-2.5 font-bold text-red-mica hover:text-black active:text-black transition-colors duration-200"
         >

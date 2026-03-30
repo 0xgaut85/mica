@@ -2,10 +2,9 @@ import { Router } from 'express'
 import { ethers } from 'ethers'
 import pool from '../db/pool.js'
 import { requireAuth } from '../middleware/auth.js'
+import { PLAN_PRICES } from '../lib/planPrices.js'
 
 const router = Router()
-
-const PLAN_PRICES = { basic: 20, premium: 75 }
 
 const TREASURY = {
   usdc_base: process.env.TREASURY_USDC_BASE_ADDRESS,
