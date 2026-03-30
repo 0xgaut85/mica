@@ -8,7 +8,10 @@ import { PLAN_PRICES } from './planPrices.js'
 export const MVM_CREATED_CAP = 100
 
 /** Growth window length (days) for floor → ceiling MMR and linked synth metrics. */
-export const SYNTH_GROWTH_DAYS_DEFAULT = 14
+export const SYNTH_GROWTH_DAYS_DEFAULT = 15
+
+/** Dashboard revenue query: max span (days) ending today (UTC). */
+export const REVENUE_SERIES_QUERY_DAYS = 90
 
 /** MMR ceiling (USD) the worker approaches over the growth window. */
 export const SYNTH_MMR_CEILING_USD_DEFAULT = 110_000
@@ -69,6 +72,15 @@ export function publicSyntheticMmrUsd(row = PUBLIC_SYNTH_DEFAULTS) {
   const pb = PLAN_PRICES.basic ?? 40
   const pp = PLAN_PRICES.premium ?? 150
   return b * pb + p * pp
+}
+
+/**
+ * Never use a stored floor below published synthetic tier MMR (legacy seeds used ~$3.2k and broke charts).
+ */
+export function effectiveSynthMmrFloorUsd(synthRow) {
+  const seed = publicSyntheticMmrUsd()
+  const x = Number(synthRow?.synth_mmr_floor_usd)
+  return Math.max(seed, Number.isFinite(x) && x > 0 ? x : 0)
 }
 
 /** Above this, treat `dashboard_users` as legacy seed noise and snap to public defaults. */

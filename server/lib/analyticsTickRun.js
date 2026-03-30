@@ -10,10 +10,10 @@ import {
 } from './analyticsSynthGrowth.js'
 import {
   apiKeysForUsers,
+  effectiveSynthMmrFloorUsd,
   MVM_CREATED_CAP,
   MVM_RUNNING_FRAC_OF_CREATED,
   PUBLIC_SYNTH_DEFAULTS,
-  publicSyntheticMmrUsd,
   SYNTH_GROWTH_DAYS_DEFAULT,
   SYNTH_MMR_CEILING_USD_DEFAULT,
 } from './analyticsSynthDefaults.js'
@@ -74,10 +74,10 @@ export async function runAnalyticsTickOnce(client) {
     throw new Error('analytics_synthetic_state row missing after insert')
   }
 
-  const mmrFloor = Number(st.synth_mmr_floor_usd) || publicSyntheticMmrUsd()
+  const mmrFloor = effectiveSynthMmrFloorUsd(st)
   const mmrCeil =
     Number(st.synth_mmr_ceiling_usd) || SYNTH_MMR_CEILING_USD_DEFAULT
-  const growthDays = Number(st.synth_growth_days) || 15
+  const growthDays = Number(st.synth_growth_days) || SYNTH_GROWTH_DAYS_DEFAULT
   const growthStart = st.synth_growth_start_at
 
   const nowMs = Date.now()
@@ -162,7 +162,10 @@ export async function runAnalyticsTickOnce(client) {
     `UPDATE analytics_synthetic_state
      SET mvm_created = $1, mvm_running = $2, cumulative_kwh_shifted = $3, dashboard_users = $4,
          subs_basic_public = $5, subs_premium_public = $6, subs_enterprise_public = $7,
-         api_keys_public = $8, updated_at = now()
+         api_keys_public = $8,
+         synth_mmr_floor_usd = $9::numeric,
+         synth_mmr_ceiling_usd = COALESCE(NULLIF(synth_mmr_ceiling_usd, 0), $10::numeric),
+         updated_at = now()
      WHERE id = 1`,
     [
       mvmCreated,
@@ -173,6 +176,8 @@ export async function runAnalyticsTickOnce(client) {
       subsPremiumPublic,
       subsEnterprisePublic,
       apiKeysPublic,
+      mmrFloor,
+      mmrCeil,
     ],
   )
 

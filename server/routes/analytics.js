@@ -12,9 +12,9 @@ import {
 } from '../lib/analyticsRevenue.js'
 import {
   apiKeysForUsers,
+  effectiveSynthMmrFloorUsd,
   normalizeSynthStateRow,
-  publicSyntheticMmrUsd,
-  revenueChartQueryStartDateUtc,
+  REVENUE_SERIES_QUERY_DAYS,
   SYNTH_GROWTH_DAYS_DEFAULT,
   SYNTH_MMR_CEILING_USD_DEFAULT,
 } from '../lib/analyticsSynthDefaults.js'
@@ -23,7 +23,11 @@ import { growthProgressMs, targetMmrUsd } from '../lib/analyticsSynthGrowth.js'
 const router = Router()
 
 function revenueSeriesQueryStartUtc() {
-  return revenueChartQueryStartDateUtc()
+  const today = new Date()
+  today.setUTCHours(0, 0, 0, 0)
+  const rolling = new Date(today)
+  rolling.setUTCDate(rolling.getUTCDate() - (REVENUE_SERIES_QUERY_DAYS - 1))
+  return rolling.toISOString().slice(0, 10)
 }
 
 const ANALYTICS_API_META = {
@@ -218,8 +222,7 @@ router.get('/dashboard', async (_req, res, next) => {
 
     const rawSynth = synthR.rows[0]
     const synthState = normalizeSynthStateRow(rawSynth)
-    const synthMmrBaseline = publicSyntheticMmrUsd(synthState)
-    const mmrFloor = Number(rawSynth?.synth_mmr_floor_usd) || synthMmrBaseline
+    const mmrFloor = effectiveSynthMmrFloorUsd(rawSynth)
     const mmrCeil =
       Number(rawSynth?.synth_mmr_ceiling_usd) || SYNTH_MMR_CEILING_USD_DEFAULT
     const growthDays =
