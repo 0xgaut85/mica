@@ -1,8 +1,4 @@
-import {
-  mergePublicSubscriptionCounts,
-  mmrFromPlanCounts,
-  netFromGrossMmrWiggled,
-} from './analyticsRevenue.js'
+import { mmrFromPlanCounts, netFromGrossMmrWiggled } from './analyticsRevenue.js'
 import {
   growthProgressMs,
   seatsForTargetMmr,
@@ -11,7 +7,12 @@ import {
   tickIntervalMs,
   ticksRemainingApprox,
 } from './analyticsSynthGrowth.js'
-import { MVM_CREATED_CAP, PUBLIC_SYNTH_DEFAULTS } from './analyticsSynthDefaults.js'
+import {
+  apiKeysForUsers,
+  MVM_CREATED_CAP,
+  PUBLIC_SYNTH_DEFAULTS,
+  publicSyntheticMmrUsd,
+} from './analyticsSynthDefaults.js'
 
 function randomChance(p) {
   return Math.random() < p
@@ -23,7 +24,6 @@ function clamp(n, lo, hi) {
 
 const d = PUBLIC_SYNTH_DEFAULTS
 const KWH_BASE = d.cumulative_kwh_shifted
-const MMR_BASE = 14000
 
 /**
  * Single analytics tick inside an open transaction (caller owns BEGIN/COMMIT).
@@ -68,7 +68,7 @@ export async function runAnalyticsTickOnce(client) {
     throw new Error('analytics_synthetic_state row missing after insert')
   }
 
-  const mmrFloor = Number(st.synth_mmr_floor_usd) || MMR_BASE
+  const mmrFloor = Number(st.synth_mmr_floor_usd) || publicSyntheticMmrUsd()
   const mmrCeil = Number(st.synth_mmr_ceiling_usd) || 110000
   const growthDays = Number(st.synth_growth_days) || 15
   const growthStart = st.synth_growth_start_at
@@ -84,9 +84,10 @@ export async function runAnalyticsTickOnce(client) {
   }
 
   const seatTargets = seatsForTargetMmr(targetMmr)
-  const userTarget = Math.round(d.dashboard_users * (targetMmr / MMR_BASE))
-  const keysTarget = Math.round(d.api_keys_public * (targetMmr / MMR_BASE))
-  const kwhTarget = KWH_BASE * (targetMmr / MMR_BASE)
+  const mmrScale = mmrFloor || 1
+  const userTarget = Math.round(d.dashboard_users * (targetMmr / mmrScale))
+  const keysTarget = Math.round(userTarget * 1.5)
+  const kwhTarget = KWH_BASE * (targetMmr / mmrScale)
   const mvmTargetCreated = Math.round(
     d.mvm_created + progress * (MVM_CREATED_CAP - d.mvm_created),
   )
@@ -106,8 +107,8 @@ export async function runAnalyticsTickOnce(client) {
 
   subsBasicPublic = Math.max(subsBasicPublic, d.subs_basic_public)
   subsPremiumPublic = Math.max(subsPremiumPublic, d.subs_premium_public)
-  apiKeysPublic = Math.max(apiKeysPublic, d.api_keys_public)
   dashboardUsers = Math.max(dashboardUsers, d.dashboard_users)
+  apiKeysPublic = Math.max(apiKeysPublic, apiKeysForUsers(dashboardUsers))
 
   subsBasicPublic = stepTowardInt(subsBasicPublic, seatTargets.basic, ticksLeft)
   subsPremiumPublic = stepTowardInt(subsPremiumPublic, seatTargets.premium, ticksLeft)
@@ -140,6 +141,8 @@ export async function runAnalyticsTickOnce(client) {
     if (randomChance(0.003) && subsPremiumPublic < 200_000) subsPremiumPublic += 1
   }
 
+  apiKeysPublic = Math.max(apiKeysPublic, apiKeysForUsers(dashboardUsers))
+
   await client.query(
     `UPDATE analytics_synthetic_state
      SET mvm_created = $1, mvm_running = $2, cumulative_kwh_shifted = $3, dashboard_users = $4,
@@ -168,11 +171,11 @@ export async function runAnalyticsTickOnce(client) {
       byPlan[r.plan] = r.n
     }
   }
-  const merged = mergePublicSubscriptionCounts(byPlan, {
-    subs_basic_public: subsBasicPublic,
-    subs_premium_public: subsPremiumPublic,
+  const gross = mmrFromPlanCounts({
+    basic: subsBasicPublic,
+    premium: subsPremiumPublic,
+    enterprise: byPlan.enterprise ?? 0,
   })
-  const gross = mmrFromPlanCounts(merged)
 
   const { rows: dayRows } = await client.query(`SELECT CURRENT_DATE::text AS day`)
   const dayKey = dayRows[0]?.day ?? ''

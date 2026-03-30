@@ -7,11 +7,13 @@ import {
 } from '../lib/electricityLiveFetch.js'
 import {
   fetchActivePlanCounts,
-  mergePublicSubscriptionCounts,
   mmrFromPlanCounts,
+  publicStoryByPlan,
 } from '../lib/analyticsRevenue.js'
 import {
+  apiKeysForUsers,
   normalizeSynthStateRow,
+  publicSyntheticMmrUsd,
   REVENUE_DAILY_SERIES_START,
 } from '../lib/analyticsSynthDefaults.js'
 import { growthProgressMs, targetMmrUsd } from '../lib/analyticsSynthGrowth.js'
@@ -163,10 +165,8 @@ router.get('/subscription-revenue', async (_req, res, next) => {
         `SELECT subs_basic_public, subs_premium_public FROM analytics_synthetic_state WHERE id = 1`,
       ),
     ])
-    const merged = mergePublicSubscriptionCounts(
-      byPlan,
-      normalizeSynthStateRow(synthR.rows[0]),
-    )
+    const synthState = normalizeSynthStateRow(synthR.rows[0])
+    const merged = publicStoryByPlan(byPlan, synthState)
     const mmrUsd = mmrFromPlanCounts(merged)
     const arrUsd = mmrUsd * 12
     const activeTotal = merged.basic + merged.premium + merged.enterprise
@@ -223,7 +223,8 @@ router.get('/dashboard', async (_req, res, next) => {
 
     const rawSynth = synthR.rows[0]
     const synthState = normalizeSynthStateRow(rawSynth)
-    const mmrFloor = Number(rawSynth?.synth_mmr_floor_usd) || 14000
+    const synthMmrBaseline = publicSyntheticMmrUsd(synthState)
+    const mmrFloor = Number(rawSynth?.synth_mmr_floor_usd) || synthMmrBaseline
     const mmrCeil = Number(rawSynth?.synth_mmr_ceiling_usd) || 110000
     const growthDays = Number(rawSynth?.synth_growth_days) || 15
     const growthStartAt = rawSynth?.synth_growth_start_at
@@ -234,10 +235,8 @@ router.get('/dashboard', async (_req, res, next) => {
     const cumulativeKwh = synthState.cumulative_kwh_shifted
     const dashboardUsersFloor = synthState.dashboard_users
     const realUsers = usersR.rows[0]?.n ?? 0
-    /** Headline counts follow the public synthetic model; registered totals exposed separately. */
-    const usersDisplayed = dashboardUsersFloor
     const realKeys = keysR.rows[0]?.n ?? 0
-    const apiKeysDisplayed = synthState.api_keys_public
+    const apiKeysDisplayed = apiKeysForUsers(synthState.dashboard_users)
 
     const env = computeEnvironmentFromKwh(cumulativeKwh)
     const dates = []
@@ -250,12 +249,14 @@ router.get('/dashboard', async (_req, res, next) => {
       net.push(Number(r.net_usd))
     }
 
-    const byPlanDisplay = mergePublicSubscriptionCounts(byPlan, synthState)
+    const byPlanDisplay = publicStoryByPlan(byPlan, synthState)
     const mmrUsd = mmrFromPlanCounts(byPlanDisplay)
     const arrUsd = mmrUsd * 12
     const activeTotal =
       byPlanDisplay.basic + byPlanDisplay.premium + byPlanDisplay.enterprise
     const enterpriseExcludedFromMmr = byPlanDisplay.enterprise > 0
+    /** Account count (synthetic row); seat totals are subscriptionRevenue.activeTotal. */
+    const usersDisplayed = synthState.dashboard_users
 
     const electricityByRegion = mergeElectricityWithLive(elecR.rows, liveSnapshot)
     const electricityComparison = buildElectricityComparison(electricityByRegion, elecR.rows)

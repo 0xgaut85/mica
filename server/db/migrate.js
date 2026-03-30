@@ -3,6 +3,7 @@ import pool from './pool.js'
 import { NET_REVENUE_FRACTION } from '../lib/analyticsRevenue.js'
 import {
   PUBLIC_SYNTH_DEFAULTS,
+  publicSyntheticMmrUsd,
   REVENUE_DAILY_SERIES_START,
 } from '../lib/analyticsSynthDefaults.js'
 
@@ -44,11 +45,11 @@ CREATE TABLE IF NOT EXISTS analytics_synthetic_state (
   mvm_created INT NOT NULL DEFAULT 14,
   mvm_running INT NOT NULL DEFAULT 11,
   cumulative_kwh_shifted DOUBLE PRECISION NOT NULL DEFAULT 2180000,
-  dashboard_users INT NOT NULL DEFAULT 221,
-  subs_basic_public INT NOT NULL DEFAULT 200,
-  subs_premium_public INT NOT NULL DEFAULT 40,
-  api_keys_public INT NOT NULL DEFAULT 59,
-  synth_mmr_floor_usd NUMERIC(14,2) NOT NULL DEFAULT 14000,
+  dashboard_users INT NOT NULL DEFAULT 211,
+  subs_basic_public INT NOT NULL DEFAULT 400,
+  subs_premium_public INT NOT NULL DEFAULT 81,
+  api_keys_public INT NOT NULL DEFAULT 317,
+  synth_mmr_floor_usd NUMERIC(14,2) NOT NULL DEFAULT 28150,
   synth_mmr_ceiling_usd NUMERIC(14,2) NOT NULL DEFAULT 110000,
   synth_growth_days INT NOT NULL DEFAULT 15,
   synth_growth_start_at TIMESTAMPTZ,
@@ -56,7 +57,7 @@ CREATE TABLE IF NOT EXISTS analytics_synthetic_state (
 );
 
 ALTER TABLE analytics_synthetic_state
-  ADD COLUMN IF NOT EXISTS synth_mmr_floor_usd NUMERIC(14,2) NOT NULL DEFAULT 14000;
+  ADD COLUMN IF NOT EXISTS synth_mmr_floor_usd NUMERIC(14,2) NOT NULL DEFAULT 28150;
 ALTER TABLE analytics_synthetic_state
   ADD COLUMN IF NOT EXISTS synth_mmr_ceiling_usd NUMERIC(14,2) NOT NULL DEFAULT 110000;
 ALTER TABLE analytics_synthetic_state
@@ -65,13 +66,13 @@ ALTER TABLE analytics_synthetic_state
   ADD COLUMN IF NOT EXISTS synth_growth_start_at TIMESTAMPTZ;
 
 ALTER TABLE analytics_synthetic_state
-  ADD COLUMN IF NOT EXISTS dashboard_users INT NOT NULL DEFAULT 221;
+  ADD COLUMN IF NOT EXISTS dashboard_users INT NOT NULL DEFAULT 211;
 ALTER TABLE analytics_synthetic_state
-  ADD COLUMN IF NOT EXISTS subs_basic_public INT NOT NULL DEFAULT 200;
+  ADD COLUMN IF NOT EXISTS subs_basic_public INT NOT NULL DEFAULT 400;
 ALTER TABLE analytics_synthetic_state
-  ADD COLUMN IF NOT EXISTS subs_premium_public INT NOT NULL DEFAULT 40;
+  ADD COLUMN IF NOT EXISTS subs_premium_public INT NOT NULL DEFAULT 81;
 ALTER TABLE analytics_synthetic_state
-  ADD COLUMN IF NOT EXISTS api_keys_public INT NOT NULL DEFAULT 59;
+  ADD COLUMN IF NOT EXISTS api_keys_public INT NOT NULL DEFAULT 317;
 
 CREATE TABLE IF NOT EXISTS analytics_revenue_daily (
   day DATE PRIMARY KEY,
@@ -134,6 +135,15 @@ async function seedAnalyticsDefaults(client) {
   )
   await client.query(
     `UPDATE analytics_synthetic_state SET
+       subs_basic_public = $1,
+       subs_premium_public = $2,
+       dashboard_users = $3,
+       api_keys_public = $4
+     WHERE id = 1 AND (subs_basic_public > 2000 OR subs_premium_public > 500)`,
+    [d.subs_basic_public, d.subs_premium_public, d.dashboard_users, d.api_keys_public],
+  )
+  await client.query(
+    `UPDATE analytics_synthetic_state SET
        mvm_created = 14,
        mvm_running = 11
      WHERE id = 1 AND mvm_created = 92 AND mvm_running = 60`,
@@ -145,13 +155,15 @@ async function seedAnalyticsDefaults(client) {
     `UPDATE analytics_synthetic_state SET mvm_running = LEAST(mvm_running, mvm_created) WHERE id = 1`,
   )
 
+  const mmrFloorSeed = publicSyntheticMmrUsd(d)
   await client.query(
     `UPDATE analytics_synthetic_state SET
        synth_growth_start_at = COALESCE(synth_growth_start_at, now()),
-       synth_mmr_floor_usd = COALESCE(NULLIF(synth_mmr_floor_usd, 0), 14000),
+       synth_mmr_floor_usd = COALESCE(NULLIF(synth_mmr_floor_usd, 0), $1),
        synth_mmr_ceiling_usd = COALESCE(NULLIF(synth_mmr_ceiling_usd, 0), 110000),
        synth_growth_days = CASE WHEN synth_growth_days < 1 THEN 15 ELSE synth_growth_days END
      WHERE id = 1`,
+    [mmrFloorSeed],
   )
 
   const regions = [
@@ -209,13 +221,14 @@ async function seedAnalyticsDefaults(client) {
           : String(rawMin).slice(0, 10)
   /** Reseed when empty or first row is not the configured anchor (e.g. 2026-01-01). */
   const needsRevenueReseed = !minDayStr || minDayStr !== REVENUE_DAILY_SERIES_START
-  if (!needsRevenueReseed && maxGross > 0 && maxGross >= 13500) return
+  const mmrTargetSeed = publicSyntheticMmrUsd(PUBLIC_SYNTH_DEFAULTS)
+  if (!needsRevenueReseed && maxGross > 0 && maxGross >= mmrTargetSeed * 0.96) return
 
   await client.query(`DELETE FROM analytics_revenue_daily`)
 
   const startMs = Date.parse(`${REVENUE_DAILY_SERIES_START}T00:00:00.000Z`)
   const grossStart = 3200
-  const grossEnd = 14000
+  const grossEnd = mmrTargetSeed
   for (let i = 0; i < 90; i += 1) {
     const dayDate = new Date(startMs + i * 86400000)
     const dayStr = dayDate.toISOString().slice(0, 10)

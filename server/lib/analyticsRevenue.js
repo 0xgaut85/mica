@@ -60,3 +60,15 @@ export function mergePublicSubscriptionCounts(realByPlan, synthRow) {
     enterprise: realByPlan.enterprise ?? 0,
   }
 }
+
+/**
+ * Public dashboard story: Basic/Premium from normalized synthetic row; Enterprise from DB only.
+ * (Avoids test DB rows like thousands of “basic” subs blowing up the published dashboard.)
+ */
+export function publicStoryByPlan(realByPlan, synthState) {
+  return {
+    basic: synthState.subs_basic_public,
+    premium: synthState.subs_premium_public,
+    enterprise: realByPlan?.enterprise ?? 0,
+  }
+}

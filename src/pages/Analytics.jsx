@@ -422,19 +422,23 @@ function ActivePlanPills({ revenue, revStatus }) {
     )
   }
   const { basic = 0, premium = 0, enterprise = 0 } = revenue.byPlan || {}
+  const total = revenue.activeTotal ?? basic + premium + enterprise
   return (
     <div className="flex flex-wrap gap-3 mb-4 md:mb-6" aria-label="Active subscriptions by plan">
       <span className="font-mono text-xs md:text-sm tracking-wide text-gray-700 border border-dashed border-[var(--gray-border)] bg-white/50 px-4 py-2.5">
-        Basic <span className="text-[var(--black)] tabular-nums font-medium">{basic}</span>
+        Basic <span className="text-zinc-500">$40/mo</span>{' '}
+        <span className="text-[var(--black)] tabular-nums font-medium">{basic}</span>
       </span>
       <span className="font-mono text-xs md:text-sm tracking-wide text-gray-700 border border-dashed border-[var(--gray-border)] bg-white/50 px-4 py-2.5">
-        Premium <span className="text-[var(--black)] tabular-nums font-medium">{premium}</span>
+        Premium <span className="text-zinc-500">$150/mo</span>{' '}
+        <span className="text-[var(--black)] tabular-nums font-medium">{premium}</span>
       </span>
       <span className="font-mono text-xs md:text-sm tracking-wide text-gray-700 border border-dashed border-[var(--gray-border)] bg-white/50 px-4 py-2.5">
-        Enterprise <span className="text-[var(--black)] tabular-nums font-medium">{enterprise}</span>
+        Enterprise <span className="text-zinc-500">contract</span>{' '}
+        <span className="text-[var(--black)] tabular-nums font-medium">{enterprise}</span>
       </span>
       <span className="font-mono text-xs md:text-sm tracking-wide text-gray-700 border border-dashed border-[var(--gray-border)] bg-white/50 px-4 py-2.5">
-        Total active <span className="text-[var(--black)] tabular-nums font-medium">{revenue.activeTotal ?? basic + premium + enterprise}</span>
+        Total active <span className="text-[var(--black)] tabular-nums font-medium">{total}</span>
       </span>
     </div>
   )
@@ -630,6 +634,9 @@ export default function Analytics() {
   const mmr = rev?.mmrUsd ?? 0
   const arr = rev?.arrUsd ?? 0
   const enterpriseNote = rev?.enterpriseExcludedFromMmr
+  const seatBasic = rev?.byPlan?.basic
+  const seatPremium = rev?.byPlan?.premium
+  const seatEnterprise = rev?.byPlan?.enterprise
 
   const grossSeries = dash?.ok ? dash.revenueSeries?.gross ?? [] : []
   const netSeries = dash?.ok ? dash.revenueSeries?.net ?? [] : []
@@ -715,17 +722,42 @@ export default function Analytics() {
                 <KpiTile
                   large
                   metricId="users"
-                  label="Users"
-                  sublabel="Registered accounts"
+                  label="Active users"
+                  sublabel="Basic + Premium + Enterprise seats"
                   value={status === 'ready' ? String(dash.users) : undefined}
                 />
                 <KpiTile
                   large
                   metricId="api-keys"
                   label="API keys"
-                  sublabel="Active (non-revoked)"
+                  sublabel="Active (non-revoked) · ≈1.5× users"
                   value={status === 'ready' ? String(dash.apiKeysActive) : undefined}
                 />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-5 mt-4 md:mt-5">
+                <KpiTile
+                  large
+                  metricId="seats-basic"
+                  label="Basic"
+                  sublabel="Active seats · $40/mo"
+                  value={status === 'ready' && seatBasic != null ? String(seatBasic) : undefined}
+                />
+                <KpiTile
+                  large
+                  metricId="seats-premium"
+                  label="Premium"
+                  sublabel="Active seats · $150/mo"
+                  value={status === 'ready' && seatPremium != null ? String(seatPremium) : undefined}
+                />
+                <KpiTile
+                  large
+                  metricId="seats-enterprise"
+                  label="Enterprise"
+                  sublabel="Active seats · contract"
+                  value={status === 'ready' && seatEnterprise != null ? String(seatEnterprise) : undefined}
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5 mt-4 md:mt-5">
                 <KpiTile
                   large
                   metricId="mvm-created"
