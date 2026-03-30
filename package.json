@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "start": "node scripts/railway-serve.mjs",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "railway:deploy-api": "railway up server --path-as-root -s mica-api -d --ci",
+    "railway:migrate-api": "railway ssh -s mica-api -- sh -c \"cd /app && node db/migrate.js\""
   },
   "dependencies": {
     "@rainbow-me/rainbowkit": "^2.2.10",

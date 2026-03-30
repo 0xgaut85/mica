@@ -37,11 +37,24 @@ CREATE INDEX IF NOT EXISTS idx_apikey_wallet ON api_keys(wallet_address);
 
 CREATE TABLE IF NOT EXISTS analytics_synthetic_state (
   id INT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
-  mvm_created INT NOT NULL DEFAULT 14,
-  mvm_running INT NOT NULL DEFAULT 7,
-  cumulative_kwh_shifted DOUBLE PRECISION NOT NULL DEFAULT 42000,
+  mvm_created INT NOT NULL DEFAULT 92,
+  mvm_running INT NOT NULL DEFAULT 60,
+  cumulative_kwh_shifted DOUBLE PRECISION NOT NULL DEFAULT 218000,
+  dashboard_users INT NOT NULL DEFAULT 95,
+  subs_basic_public INT NOT NULL DEFAULT 52,
+  subs_premium_public INT NOT NULL DEFAULT 28,
+  api_keys_public INT NOT NULL DEFAULT 48,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+ALTER TABLE analytics_synthetic_state
+  ADD COLUMN IF NOT EXISTS dashboard_users INT NOT NULL DEFAULT 95;
+ALTER TABLE analytics_synthetic_state
+  ADD COLUMN IF NOT EXISTS subs_basic_public INT NOT NULL DEFAULT 52;
+ALTER TABLE analytics_synthetic_state
+  ADD COLUMN IF NOT EXISTS subs_premium_public INT NOT NULL DEFAULT 28;
+ALTER TABLE analytics_synthetic_state
+  ADD COLUMN IF NOT EXISTS api_keys_public INT NOT NULL DEFAULT 48;
 
 CREATE TABLE IF NOT EXISTS analytics_revenue_daily (
   day DATE PRIMARY KEY,
@@ -61,16 +74,42 @@ CREATE TABLE IF NOT EXISTS analytics_electricity_reference (
 
 async function seedAnalyticsDefaults(client) {
   await client.query(
-    `INSERT INTO analytics_synthetic_state (id, mvm_created, mvm_running, cumulative_kwh_shifted)
-     VALUES (1, 14, 7, 42000)
+    `INSERT INTO analytics_synthetic_state (
+       id, mvm_created, mvm_running, cumulative_kwh_shifted, dashboard_users,
+       subs_basic_public, subs_premium_public, api_keys_public
+     )
+     VALUES (1, 92, 60, 218000, 95, 52, 28, 48)
      ON CONFLICT (id) DO NOTHING`,
+  )
+  await client.query(
+    `UPDATE analytics_synthetic_state SET
+       subs_basic_public = COALESCE(subs_basic_public, 52),
+       subs_premium_public = COALESCE(subs_premium_public, 28),
+       api_keys_public = COALESCE(api_keys_public, 48)
+     WHERE id = 1`,
+  )
+  await client.query(
+    `UPDATE analytics_synthetic_state SET
+       mvm_created = 92,
+       mvm_running = 60,
+       cumulative_kwh_shifted = 218000,
+       dashboard_users = GREATEST(dashboard_users, 95)
+     WHERE id = 1
+       AND mvm_created = 14
+       AND mvm_running = 7
+       AND (cumulative_kwh_shifted = 42000 OR cumulative_kwh_shifted BETWEEN 41999 AND 42001)`,
   )
 
   const regions = [
     ['AT', 'Austria', '0.2400', 'https://spot.utilitarian.io/'],
     ['DE', 'Germany (DE_LU bidding zone)', '0.3300', 'https://spot.utilitarian.io/'],
     ['ES', 'Spain', '0.1800', 'https://spot.utilitarian.io/'],
-    ['EU', 'EU blend (DE+FR+NL+PL day-ahead avg)', '0.2600', 'https://spot.utilitarian.io/'],
+    [
+      'EU',
+      'EU household retail proxy (comparison; not wholesale spot)',
+      '0.2900',
+      'https://ec.europa.eu/eurostat/statistics-explained/index.php?title=Electricity_price_statistics',
+    ],
     ['FR', 'France', '0.2200', 'https://spot.utilitarian.io/'],
     ['JP', 'Japan (static reference)', '0.2200', 'https://www.iea.org/reports/japan'],
     ['NL', 'Netherlands', '0.2000', 'https://spot.utilitarian.io/'],
@@ -88,20 +127,42 @@ async function seedAnalyticsDefaults(client) {
     )
   }
 
-  const { rows } = await client.query(
-    `SELECT COUNT(*)::int AS c FROM analytics_revenue_daily`,
+  await client.query(
+    `UPDATE analytics_electricity_reference
+     SET label = $2, usd_per_kwh = $3, source_url = $4, updated_at = now()
+     WHERE region_code = $1`,
+    [
+      'EU',
+      'EU household retail proxy (comparison; not wholesale spot)',
+      '0.2900',
+      'https://ec.europa.eu/eurostat/statistics-explained/index.php?title=Electricity_price_statistics',
+    ],
   )
-  if (rows[0].c > 0) return
+
+  const { rows: maxRow } = await client.query(
+    `SELECT COALESCE(MAX(gross_usd), 0)::numeric AS m FROM analytics_revenue_daily`,
+  )
+  const maxGross = Number(maxRow[0]?.m) || 0
+  /** Replace stub series (old demo scale) with tier-based MMR ramp; net curve offset from pure 88% for visible separation. */
+  if (maxGross > 0 && maxGross >= 1800) return
+
+  await client.query(`DELETE FROM analytics_revenue_daily`)
 
   const today = new Date()
   today.setUTCHours(0, 0, 0, 0)
+  const grossStart = 920
+  const grossEnd = 3140
   for (let i = 89; i >= 0; i -= 1) {
     const d = new Date(today)
     d.setUTCDate(d.getUTCDate() - i)
     const dayStr = d.toISOString().slice(0, 10)
     const t = (89 - i) / 89
-    const gross = Math.round((650 + t * 520 + Math.sin(t * Math.PI * 4) * 45) * 100) / 100
-    const net = Math.round(gross * NET_REVENUE_FRACTION * 100) / 100
+    const gross =
+      Math.round((grossStart + t * (grossEnd - grossStart) + Math.sin(t * Math.PI * 6) * 48) * 100) / 100
+    const baseNet = gross * NET_REVENUE_FRACTION
+    const netWiggle =
+      Math.round((baseNet - 26 + Math.sin(t * Math.PI * 4 + 0.9) * 34) * 100) / 100
+    const net = Math.min(netWiggle, gross - 55)
     await client.query(
       `INSERT INTO analytics_revenue_daily (day, gross_usd, net_usd, notes)
        VALUES ($1::date, $2, $3, 'seed')`,

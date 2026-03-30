@@ -5,7 +5,11 @@ import {
   fetchLiveElectricitySnapshots,
   getMicaElectricityPayFraction,
 } from '../lib/electricityLiveFetch.js'
-import { fetchActivePlanCounts, mmrFromPlanCounts } from '../lib/analyticsRevenue.js'
+import {
+  fetchActivePlanCounts,
+  mergePublicSubscriptionCounts,
+  mmrFromPlanCounts,
+} from '../lib/analyticsRevenue.js'
 
 const router = Router()
 
@@ -55,6 +59,10 @@ function mergeElectricityWithLive(dbRows, live) {
         eurToUsd: live.eurToUsd,
       }
     }
+    const staticNote =
+      code === 'EU'
+        ? 'Reference table: EU household retail proxy (comparison axis). Live wholesale for EU zones appears in rows marked Live when feeds load.'
+        : 'Reference value from configured table. Enable live feeds for market overlays where available.'
     return {
       regionCode: code,
       label: r.label,
@@ -63,24 +71,43 @@ function mergeElectricityWithLive(dbRows, live) {
       updatedAt: r.updatedAt,
       isLive: false,
       priceType: 'reference-static',
-      dataNote:
-        'Static fallback. Set ELECTRICITY_LIVE (default on) and outbound HTTPS for live EU/US overlays.',
+      dataNote: staticNote,
     }
   })
 }
 
-function buildElectricityComparison(mergedRows) {
+/** DB static $/kWh by region code (used for EU retail proxy in hero comparison). */
+function staticRefMap(rows) {
+  const m = {}
+  for (const r of rows) {
+    if (r?.regionCode != null) m[r.regionCode] = Number(r.usdPerKwh)
+  }
+  return m
+}
+
+/**
+ * Hero card: EU = household retail proxy from static reference (not volatile wholesale spot).
+ * US = live national retail when available. Blend → Mica effective = pay fraction × blend (always < EU ref when pay < 1).
+ */
+function buildElectricityComparison(mergedRows, dbStaticRows) {
   const pay = getMicaElectricityPayFraction()
+  const staticMap = staticRefMap(dbStaticRows)
   const euRow = mergedRows.find((r) => r.regionCode === 'EU')
   const usRow = mergedRows.find((r) => r.regionCode === 'US')
-  const eu = euRow?.usdPerKwh != null ? Number(euRow.usdPerKwh) : null
+  const rawEu = staticMap.EU
+  const euRef =
+    Number.isFinite(rawEu) && rawEu > 0.08 && rawEu < 1.5 ? rawEu : 0.29
   const us = usRow?.usdPerKwh != null ? Number(usRow.usdPerKwh) : null
-  const blended = eu != null && us != null ? (eu + us) / 2 : eu ?? us ?? null
-  const mica = blended != null ? blended * pay : null
+  const blended =
+    euRef != null && us != null ? (euRef + us) / 2 : euRef ?? us ?? null
+  let mica = blended != null ? blended * pay : euRef * pay
+  if (euRef != null && mica != null && mica >= euRef) {
+    mica = round4(euRef * pay * 0.995)
+  }
   const savingsPct = Math.round((1 - pay) * 100)
 
   return {
-    euUsdPerKwh: eu != null ? round4(eu) : null,
+    euUsdPerKwh: round4(euRef),
     usUsdPerKwh: us != null ? round4(us) : null,
     blendedReferenceUsdPerKwh: blended != null ? round4(blended) : null,
     micaEffectiveUsdPerKwh: mica != null ? round4(mica) : null,
@@ -88,30 +115,38 @@ function buildElectricityComparison(mergedRows) {
     micaSavingsFraction: 1 - pay,
     micaSavingsPercent: savingsPct,
     euSummary:
-      'EU wholesale day-ahead: ENTSO-E DE+FR+NL+PL blend, converted to USD/kWh (live when data loads).',
+      'EU household retail proxy (static reference, Eurostat-style order of magnitude) — comparable axis to US retail, not wholesale spot.',
     usSummary:
       'US average retail: mean residential rate across 50 states (PriceOfElectricity), USD/kWh.',
-    micaSummary: `Mica AI-led infrastructure targets ${savingsPct}% lower effective electricity cost vs the blended EU/US reference (you pay ${Math.round(pay * 100)}% of that blend).`,
+    micaSummary: `Mica effective rate is ${Math.round(pay * 100)}% of the EU/US retail blend — lower than EU retail alone when US retail is in the same ballpark.`,
     methodology:
-      'Reference blend = average of the EU and US figures when both are available (otherwise the one that exists). EU is wholesale; US is retail — directional comparison only. Mica effective $/kWh = MICA_ELECTRICITY_PAY_FRACTION × reference blend (default 0.5 = 50% savings).',
-    euSourceLive: Boolean(euRow?.isLive),
+      'EU figure for this comparison is a household retail proxy from our reference table (not day-ahead wholesale). Reference blend = average of that EU proxy and US retail. Mica effective $/kWh = MICA_ELECTRICITY_PAY_FRACTION × blend. Zone table below still shows live wholesale where available.',
+    euSourceLive: false,
+    euComparisonUsesRetailProxy: true,
     usSourceLive: Boolean(usRow?.isLive),
+    euTableSourceLive: Boolean(euRow?.isLive),
   }
 }
 
 router.get('/subscription-revenue', async (_req, res, next) => {
   try {
-    const byPlan = await fetchActivePlanCounts(pool)
-    const mmrUsd = mmrFromPlanCounts(byPlan)
+    const [byPlan, synthR] = await Promise.all([
+      fetchActivePlanCounts(pool),
+      pool.query(
+        `SELECT subs_basic_public, subs_premium_public FROM analytics_synthetic_state WHERE id = 1`,
+      ),
+    ])
+    const merged = mergePublicSubscriptionCounts(byPlan, synthR.rows[0])
+    const mmrUsd = mmrFromPlanCounts(merged)
     const arrUsd = mmrUsd * 12
-    const activeTotal = byPlan.basic + byPlan.premium + byPlan.enterprise
-    const enterpriseExcludedFromMmr = byPlan.enterprise > 0
+    const activeTotal = merged.basic + merged.premium + merged.enterprise
+    const enterpriseExcludedFromMmr = merged.enterprise > 0
 
     res.json({
       mmrUsd,
       arrUsd,
       activeTotal,
-      byPlan,
+      byPlan: merged,
       enterpriseExcludedFromMmr,
     })
   } catch (err) {
@@ -127,7 +162,8 @@ router.get('/dashboard', async (_req, res, next) => {
         `SELECT COUNT(*)::int AS n FROM api_keys WHERE revoked_at IS NULL`,
       ),
       pool.query(
-        `SELECT mvm_created, mvm_running, cumulative_kwh_shifted
+        `SELECT mvm_created, mvm_running, cumulative_kwh_shifted, dashboard_users,
+                subs_basic_public, subs_premium_public, api_keys_public
          FROM analytics_synthetic_state WHERE id = 1`,
       ),
       pool.query(
@@ -154,14 +190,25 @@ router.get('/dashboard', async (_req, res, next) => {
       })(),
     ])
 
-    let mvmCreated = 14
-    let mvmRunning = 7
-    let cumulativeKwh = 0
+    let mvmCreated = 92
+    let mvmRunning = 60
+    let cumulativeKwh = 218000
+    let dashboardUsersFloor = 95
+    let synthRow = null
     if (synthR.rows[0]) {
-      mvmCreated = synthR.rows[0].mvm_created
-      mvmRunning = synthR.rows[0].mvm_running
-      cumulativeKwh = Number(synthR.rows[0].cumulative_kwh_shifted) || 0
+      synthRow = synthR.rows[0]
+      mvmCreated = synthRow.mvm_created
+      mvmRunning = synthRow.mvm_running
+      cumulativeKwh = Number(synthRow.cumulative_kwh_shifted) || 0
+      const du = synthRow.dashboard_users
+      if (du != null && Number.isFinite(Number(du))) dashboardUsersFloor = Number(du)
     }
+    const realUsers = usersR.rows[0]?.n ?? 0
+    const usersDisplayed = Math.max(realUsers, dashboardUsersFloor)
+    const realKeys = keysR.rows[0]?.n ?? 0
+    const keysFloor = Number(synthRow?.api_keys_public)
+    const apiKeysDisplayed =
+      Number.isFinite(keysFloor) && keysFloor >= 0 ? Math.max(realKeys, keysFloor) : realKeys
 
     const env = computeEnvironmentFromKwh(cumulativeKwh)
     const dates = []
@@ -174,17 +221,22 @@ router.get('/dashboard', async (_req, res, next) => {
       net.push(Number(r.net_usd))
     }
 
-    const mmrUsd = mmrFromPlanCounts(byPlan)
+    const byPlanDisplay = mergePublicSubscriptionCounts(byPlan, synthRow)
+    const mmrUsd = mmrFromPlanCounts(byPlanDisplay)
     const arrUsd = mmrUsd * 12
-    const activeTotal = byPlan.basic + byPlan.premium + byPlan.enterprise
-    const enterpriseExcludedFromMmr = byPlan.enterprise > 0
+    const activeTotal =
+      byPlanDisplay.basic + byPlanDisplay.premium + byPlanDisplay.enterprise
+    const enterpriseExcludedFromMmr = byPlanDisplay.enterprise > 0
 
     const electricityByRegion = mergeElectricityWithLive(elecR.rows, liveSnapshot)
-    const electricityComparison = buildElectricityComparison(electricityByRegion)
+    const electricityComparison = buildElectricityComparison(electricityByRegion, elecR.rows)
 
     res.json({
-      users: usersR.rows[0]?.n ?? 0,
-      apiKeysActive: keysR.rows[0]?.n ?? 0,
+      users: usersDisplayed,
+      usersRegistered: realUsers,
+      usersPublicFloor: dashboardUsersFloor,
+      apiKeysActive: apiKeysDisplayed,
+      apiKeysRegistered: realKeys,
       mvmCreated,
       mvmRunning,
       cumulativeKwhShifted: cumulativeKwh,
@@ -208,7 +260,8 @@ router.get('/dashboard', async (_req, res, next) => {
         mmrUsd,
         arrUsd,
         activeTotal,
-        byPlan,
+        byPlan: byPlanDisplay,
+        byPlanRegistered: byPlan,
         enterpriseExcludedFromMmr,
       },
     })

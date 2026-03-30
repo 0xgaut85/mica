@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3:4 Template</title>
+  <title>Mica — Nordic pilot · 3:4</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400&family=Space+Mono:wght@400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Space+Mono:wght@400&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -31,18 +31,18 @@
     .canvas-bg {
       position: absolute;
       inset: 0;
-      background: url('larry.jpg') no-repeat;
+      background: url('norway.png') no-repeat;
       background-size: cover;
-      background-position: 28% center;
+      background-position: center 32%;
       z-index: 0;
     }
 
     .canvas-blur {
       position: absolute;
       inset: 0;
-      background: url('larry.jpg') no-repeat;
+      background: url('norway.png') no-repeat;
       background-size: cover;
-      background-position: 28% center;
+      background-position: center 32%;
       filter: blur(8px);
       clip-path: polygon(901px 0, 1080px 0, 1080px 1081px, 901px 1081px, 901px 1440px, 0 1440px, 0 1081px, 901px 1081px);
       z-index: 1;
@@ -57,28 +57,28 @@
       z-index: 2;
     }
 
-    /* Bottom-left rectangle: top-right corner cut (extended right for quote) */
+    /* Bottom-left rectangle: full height from horizontal dashed guide (y = 1081px) to bottom bleed */
     .block-bl {
       position: absolute;
+      top: 1081px;
       bottom: -30px;
       left: -30px;
-      z-index: 10;
-      width: 668px;
-      min-height: 390px;
-      height: auto;
+      z-index: 9;
+      width: 418px;
       background: #060606;
       clip-path: polygon(
         0 0,
-        calc(100% - 75px) 0,
-        100% 75px,
+        calc(100% - 48px) 0,
+        100% 48px,
         100% 100%,
         0 100%
       );
       display: flex;
       align-items: center;
-      justify-content: center;
-      padding: 44px 52px 52px 56px;
+      justify-content: flex-start;
+      padding: 44px 40px 48px 52px;
       overflow: hidden;
+      container-type: size;
     }
 
     .block-bl::before {
@@ -96,49 +96,96 @@
     .block-bl .stat-text {
       position: relative;
       z-index: 2;
+      flex: 0 0 auto;
       width: 100%;
       max-width: 100%;
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
       text-align: left;
       color: #ffffff;
-      font-family: 'Instrument Sans', sans-serif;
-      font-weight: 400;
+      font-family: 'Inter', sans-serif;
+      font-optical-sizing: auto;
+      font-weight: 100;
       line-height: 1.1;
+      -webkit-font-smoothing: antialiased;
     }
 
-    .block-bl .bl-quote {
+    .block-bl .bl-stat {
       margin: 0;
-      padding: 0 0 0 18px;
-      border-left: 3px solid #FF0032;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: flex-start;
+      gap: clamp(12px, 2.6cqh, 24px);
+      text-align: left;
+      max-width: 100%;
     }
 
-    .block-bl .bl-quote__text {
+    .block-bl .bl-stat__head {
+      flex: 0 0 auto;
+      width: auto;
+      margin-left: -6px;
+    }
+
+    .block-bl .bl-stat__value {
       margin: 0;
-      font-family: 'Instrument Sans', sans-serif;
-      font-size: 24px;
+      padding: 0;
+      font-family: 'Inter', sans-serif;
+      font-size: clamp(108px, min(34cqi, 38cqh), 152px);
       font-weight: 400;
-      line-height: 1.48;
-      letter-spacing: 0.01em;
-      color: #ffffff;
-      font-style: normal;
-      max-width: 36em;
+      letter-spacing: -0.04em;
+      line-height: 0.9;
+      color: #FF0032;
+      font-variant-numeric: tabular-nums;
     }
 
-    .block-bl .bl-quote__text em {
-      font-style: italic;
-      color: rgba(255, 255, 255, 0.92);
+    .block-bl .bl-stat__value-suffix {
+      font-size: 1em;
+      font-weight: 400;
+      letter-spacing: -0.04em;
+      margin-left: 0.01em;
     }
 
-    .block-bl .bl-quote__attr {
-      display: block;
-      margin-top: 22px;
-      font-family: 'Instrument Sans', sans-serif;
-      font-size: 11px;
-      font-weight: 400;
-      font-style: normal;
-      letter-spacing: 0.16em;
+    .block-bl .bl-stat__caption {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      max-width: 13em;
+      font-family: 'Inter', sans-serif;
+      font-weight: 200;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
-      color: rgba(255, 255, 255, 0.48);
-      line-height: 1.4;
+      line-height: 1.15;
+      color: #ffffff;
+    }
+
+    .block-bl .bl-stat__caption-renewable {
+      display: block;
+      font-size: clamp(40px, min(17cqi, 12.5cqh), 60px);
+      font-weight: 300;
+      letter-spacing: 0.05em;
+      line-height: 1.05;
+      margin-bottom: 0.14em;
+    }
+
+    .block-bl .bl-stat__caption-row {
+      display: block;
+      line-height: 1.2;
+    }
+
+    .block-bl .bl-stat__caption-mid {
+      font-size: clamp(26px, min(10.8cqi, 7.8cqh), 42px);
+      font-weight: 200;
+      letter-spacing: 0.07em;
+    }
+
+    .block-bl .bl-stat__caption-of {
+      font-size: clamp(17px, min(6.8cqi, 5cqh), 26px);
+      font-weight: 200;
+      letter-spacing: 0.12em;
+      vertical-align: baseline;
     }
 
     /* Top-right logo area: dark textured (box unchanged; logo scaled inside) */
@@ -237,10 +284,17 @@
     <span class="line-star"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l2.5 7.5L22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5L12 2z" fill="currentColor"/></svg></span>
     <div class="block-bl">
       <div class="stat-text">
-        <blockquote class="bl-quote" cite="https://www.blackrock.com/us/individual/about-us/larry-fink-annual-chairmans-letter">
-          <p class="bl-quote__text">And when the <em>Magnificent 7</em> companies build out data centers or power infrastructure, even they turn to the capital markets.</p>
-          <cite class="bl-quote__attr">Larry Fink - Blackrock CEO</cite>
-        </blockquote>
+        <div class="bl-stat">
+          <div class="bl-stat__head">
+            <p class="bl-stat__value">98<span class="bl-stat__value-suffix">%</span></p>
+          </div>
+          <p class="bl-stat__caption">
+            <span class="bl-stat__caption-renewable">Renewable</span>
+            <span class="bl-stat__caption-row">
+              <span class="bl-stat__caption-mid">share</span><span class="bl-stat__caption-of"> of </span><span class="bl-stat__caption-mid">electricity</span>
+            </span>
+          </p>
+        </div>
       </div>
     </div>
     <div class="logo-area">

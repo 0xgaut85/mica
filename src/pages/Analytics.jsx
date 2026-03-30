@@ -31,8 +31,8 @@ function formatUsdPerKwh(n) {
   return `$${Number(n).toFixed(3)}/kWh`
 }
 
-function polylinePoints(series, x0, x1, y0, y1) {
-  if (!series?.length) return ''
+function computeSeriesBounds(series) {
+  if (!series?.length) return null
   const nums = series.map(Number)
   let min = Math.min(...nums)
   let max = Math.max(...nums)
@@ -41,6 +41,22 @@ function polylinePoints(series, x0, x1, y0, y1) {
   min -= pad
   max += pad
   const range = max - min || 1
+  return { min, max, range, nums }
+}
+
+function formatUsdAxis(n) {
+  const v = Number(n)
+  if (!Number.isFinite(v)) return '—'
+  if (Math.abs(v) >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`
+  if (Math.abs(v) >= 10_000) return `$${Math.round(v / 1000)}k`
+  if (Math.abs(v) >= 1000) return `$${(v / 1000).toFixed(1)}k`
+  return formatUsd(v)
+}
+
+function polylinePoints(series, x0, x1, y0, y1) {
+  const b = computeSeriesBounds(series)
+  if (!b) return ''
+  const { min, max, range, nums } = b
   return nums
     .map((v, i) => {
       const t = nums.length <= 1 ? 0.5 : i / (nums.length - 1)
@@ -73,13 +89,14 @@ function ChartShell({
   hero = false,
   series = null,
   stroke = '#fb7185',
+  showUsdYTicks = false,
 }) {
   const vbW = hero ? 800 : 400
   const vbH = hero ? 320 : 200
   const gridLines = hero ? 7 : 4
   const y0 = 40
   const y1 = vbH - 32
-  const x0 = 56
+  const x0 = hero && showUsdYTicks ? 88 : showUsdYTicks ? 72 : 56
   const x1 = vbW - 28
   const step = (y1 - y0) / gridLines
 
@@ -105,6 +122,21 @@ function ChartShell({
     [series, x0, x1, y0, y1],
   )
   const hasSeries = Boolean(pts)
+
+  const yTickLabels = useMemo(() => {
+    if (!showUsdYTicks || !series?.length || series.length < 2) return []
+    const b = computeSeriesBounds(series)
+    if (!b) return []
+    const n = hero ? 6 : 5
+    const out = []
+    for (let j = 0; j < n; j += 1) {
+      const t = n <= 1 ? 0 : j / (n - 1)
+      const val = b.max - t * (b.max - b.min)
+      const y = y0 + t * (y1 - y0)
+      out.push({ val, y })
+    }
+    return out
+  }, [showUsdYTicks, series, hero, y0, y1])
 
   return (
     <section
@@ -134,6 +166,18 @@ function ChartShell({
           {lines}
           <line x1={x0} y1={y0} x2={x0} y2={y1} stroke={STROKE_AXIS} strokeWidth={1} />
           <line x1={x0} y1={y1} x2={x1} y2={y1} stroke={STROKE_AXIS} strokeWidth={1} />
+          {yTickLabels.map(({ val, y }, idx) => (
+            <text
+              key={idx}
+              x={x0 - 8}
+              y={y + 4}
+              textAnchor="end"
+              fill="currentColor"
+              style={{ fontSize: hero ? 10 : 9, fontFamily: 'ui-monospace, monospace' }}
+            >
+              {formatUsdAxis(val)}
+            </text>
+          ))}
           {hasSeries ? (
             <polyline
               fill="none"
@@ -167,7 +211,9 @@ function ChartShell({
       </div>
       <p className="font-mono text-[9px] md:text-[10px] text-zinc-500 mt-3 tracking-wide leading-tight">
         {hasSeries
-          ? 'Daily series (UTC). Net applies a blended processing take on gross MMR.'
+          ? showUsdYTicks
+            ? 'Daily series (UTC). Gross = tier-priced MMR; net uses a day-varying fee model so the two curves are not a fixed ratio.'
+            : 'Daily series (UTC). Net applies a blended processing take on gross MMR.'
           : 'Awaiting series data.'}
       </p>
     </section>
@@ -288,8 +334,10 @@ function ElectricityComparisonHero({ comp, status }) {
           <p className="font-mono text-[11px] text-zinc-500 leading-relaxed">{comp.euSummary}</p>
           {comp.euSourceLive ? (
             <span className="font-mono text-[9px] uppercase text-red-mica/90 w-fit">Live wholesale</span>
+          ) : comp.euComparisonUsesRetailProxy ? (
+            <span className="font-mono text-[9px] uppercase text-zinc-500 w-fit">Retail proxy</span>
           ) : (
-            <span className="font-mono text-[9px] uppercase text-zinc-500 w-fit">Static fallback</span>
+            <span className="font-mono text-[9px] uppercase text-zinc-500 w-fit">Reference</span>
           )}
         </article>
         <article
@@ -303,7 +351,7 @@ function ElectricityComparisonHero({ comp, status }) {
           {comp.usSourceLive ? (
             <span className="font-mono text-[9px] uppercase text-red-mica/90 w-fit">Live API (50 states)</span>
           ) : (
-            <span className="font-mono text-[9px] uppercase text-zinc-500 w-fit">Static fallback</span>
+            <span className="font-mono text-[9px] uppercase text-zinc-500 w-fit">Configured reference</span>
           )}
         </article>
         <article
@@ -342,7 +390,7 @@ function ElectricityStrip({ regions, status, liveMeta }) {
         <p>
           {liveMeta?.ok
             ? `EU: ENTSO-E day-ahead (Utilitarian). EUR→USD ECB (≈${liveMeta.eurToUsd != null ? Number(liveMeta.eurToUsd).toFixed(4) : '—'}). US national row: mean residential across 50 states (PriceOfElectricity).`
-            : 'Live feeds unavailable; showing static fallbacks where configured.'}
+            : 'Live feeds unavailable; zone rows use reference values until overlays load.'}
           {liveMeta?.fetchedAt ? (
             <>
               {' '}
@@ -366,7 +414,7 @@ function ElectricityStrip({ regions, status, liveMeta }) {
                 </span>
               ) : (
                 <span className="font-mono text-[9px] tracking-wide uppercase bg-gray-200/80 text-gray-600 px-1.5 py-0.5">
-                  Static
+                  {r.regionCode === 'EU' ? 'Reference' : 'Static'}
                 </span>
               )}
             </div>
@@ -410,16 +458,31 @@ function ElectricityStrip({ regions, status, liveMeta }) {
 
 export default function Analytics() {
   const [dash, setDash] = useState(null)
+  const [dashError, setDashError] = useState(null)
 
   useEffect(() => {
     let cancelled = false
+    setDashError(null)
     fetch(`${API_BASE}/analytics/dashboard`)
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('bad status'))))
-      .then((data) => {
-        if (!cancelled) setDash({ ok: true, ...data })
+      .then(async (r) => {
+        if (!r.ok) {
+          const msg = `HTTP ${r.status}`
+          if (!cancelled) setDashError(msg)
+          throw new Error(msg)
+        }
+        return r.json()
       })
-      .catch(() => {
-        if (!cancelled) setDash({ ok: false })
+      .then((data) => {
+        if (!cancelled) {
+          setDashError(null)
+          setDash({ ok: true, ...data })
+        }
+      })
+      .catch((e) => {
+        if (!cancelled) {
+          setDash({ ok: false })
+          setDashError((prev) => prev || e?.message || 'Network error')
+        }
       })
     return () => {
       cancelled = true
@@ -467,6 +530,17 @@ export default function Analytics() {
             Aggregate indicators. Values publish with verified telemetry.
           </p>
         </header>
+
+        {status === 'error' && dashError ? (
+          <div
+            className="mb-8 md:mb-10 p-4 md:p-5 border border-dashed border-red-mica/45 bg-red-mica/[0.06] font-mono text-xs md:text-sm text-red-mica leading-relaxed"
+            role="alert"
+          >
+            <span className="font-semibold">Dashboard data unavailable.</span> {dashError}. Confirm{' '}
+            <code className="text-[11px] opacity-90">{API_BASE}/analytics/dashboard</code> returns JSON (deploy
+            the <code className="text-[11px] opacity-90">server</code> service).
+          </div>
+        ) : null}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 xl:gap-16 items-start">
           <div className="flex flex-col gap-8 md:gap-10 min-w-0">
@@ -518,15 +592,17 @@ export default function Analytics() {
                   xLabel="Day (UTC)"
                   series={grossSeries}
                   stroke="#fb7185"
+                  showUsdYTicks
                 />
                 <ChartShell
                   hero
                   title="Net revenue"
-                  subtitle="Gross less a blended processing take (88% of gross MMR)."
+                  subtitle="After blended processing take (typically ~84–92% of gross MMR; varies by day in the model)."
                   yLabel="USD"
                   xLabel="Day (UTC)"
                   series={netSeries}
                   stroke="#a8a29e"
+                  showUsdYTicks
                 />
               </div>
             </div>
