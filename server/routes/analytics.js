@@ -8,6 +8,7 @@ import {
 import {
   fetchActivePlanCounts,
   mmrFromPlanCounts,
+  netFromGrossMmrWiggled,
   publicStoryByPlan,
 } from '../lib/analyticsRevenue.js'
 import {
@@ -17,6 +18,7 @@ import {
   REVENUE_SERIES_QUERY_DAYS,
   SYNTH_GROWTH_DAYS_DEFAULT,
   SYNTH_MMR_CEILING_USD_DEFAULT,
+  utcDateString,
 } from '../lib/analyticsSynthDefaults.js'
 import { growthProgressMs, targetMmrUsd } from '../lib/analyticsSynthGrowth.js'
 
@@ -199,9 +201,9 @@ router.get('/dashboard', async (_req, res, next) => {
       pool.query(
         `SELECT day, gross_usd, net_usd
          FROM analytics_revenue_daily
-         WHERE day >= $1::date AND day <= CURRENT_DATE
+         WHERE day >= $1::date AND day <= $2::date
          ORDER BY day ASC`,
-        [revenueSeriesQueryStartUtc()],
+        [revenueSeriesQueryStartUtc(), utcDateString()],
       ),
       pool.query(
         `SELECT region_code AS "regionCode", label, usd_per_kwh AS "usdPerKwh", source_url AS "sourceUrl", updated_at AS "updatedAt"
@@ -250,6 +252,17 @@ router.get('/dashboard', async (_req, res, next) => {
 
     const byPlanDisplay = publicStoryByPlan(byPlan, synthState)
     const mmrUsd = Math.round(growthTargetMmr * 100) / 100
+    /** Today (UTC) must match subscription MMR tile; avoids stale/wrong bucket if DB session TZ ≠ UTC or worker lag. */
+    const todayUtc = utcDateString()
+    const todayIdx = dates.findIndex((x) => x === todayUtc)
+    if (todayIdx >= 0) {
+      gross[todayIdx] = mmrUsd
+      net[todayIdx] = netFromGrossMmrWiggled(mmrUsd, todayUtc)
+    } else if (dates.length === 0 || dates[dates.length - 1] < todayUtc) {
+      dates.push(todayUtc)
+      gross.push(mmrUsd)
+      net.push(netFromGrossMmrWiggled(mmrUsd, todayUtc))
+    }
     const arrUsd = mmrUsd * 12
     const activeTotal =
       byPlanDisplay.basic + byPlanDisplay.premium + byPlanDisplay.enterprise

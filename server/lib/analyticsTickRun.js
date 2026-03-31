@@ -184,13 +184,15 @@ export async function runAnalyticsTickOnce(client) {
   /** Chart series = growth target MMR (seats still crawl toward same target). */
   const revenueGrossUsd = Math.round(Number(targetMmr) * 100) / 100
 
-  const { rows: dayRows } = await client.query(`SELECT CURRENT_DATE::text AS day`)
+  const { rows: dayRows } = await client.query(
+    `SELECT (now() AT TIME ZONE 'UTC')::date::text AS day`,
+  )
   const dayKey = dayRows[0]?.day ?? ''
   const net = netFromGrossMmrWiggled(revenueGrossUsd, dayKey)
 
   await client.query(
     `INSERT INTO analytics_revenue_daily (day, gross_usd, net_usd, notes)
-     VALUES (CURRENT_DATE, $1, $2, 'tick')
+     VALUES ((now() AT TIME ZONE 'UTC')::date, $1, $2, 'tick')
      ON CONFLICT (day) DO UPDATE SET
        gross_usd = EXCLUDED.gross_usd,
        net_usd = EXCLUDED.net_usd,
