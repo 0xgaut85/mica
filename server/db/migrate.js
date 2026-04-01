@@ -11,6 +11,14 @@ import {
   utcDateString,
 } from '../lib/analyticsSynthDefaults.js'
 
+/**
+ * `RESET_ANALYTICS_GROWTH=1`: delete+reseed last SYNTH_GROWTH_DAYS revenue rows and set `synth_growth_start_at` to window start.
+ * Prod repair if start was wrong: `UPDATE analytics_synthetic_state SET synth_growth_start_at = $1::timestamptz WHERE id = 1` (pick instant from backup).
+ */
+function resetAnalyticsGrowth() {
+  return process.env.RESET_ANALYTICS_GROWTH === '1'
+}
+
 const SQL = `
 CREATE TABLE IF NOT EXISTS users (
   wallet_address TEXT PRIMARY KEY,
@@ -142,12 +150,16 @@ async function seedAnalyticsDefaults(client) {
     `UPDATE analytics_synthetic_state SET
        dashboard_users = $1,
        api_keys_public = $2,
-       synth_growth_start_at = $3::timestamptz
+       synth_growth_start_at = CASE
+         WHEN $4::boolean THEN $3::timestamptz
+         ELSE COALESCE(synth_growth_start_at, $3::timestamptz)
+       END
      WHERE id = 1 AND dashboard_users > 2200`,
     [
       d.dashboard_users,
       d.api_keys_public,
       `${revenueChartQueryStartDateUtc()}T00:00:00.000Z`,
+      resetAnalyticsGrowth(),
     ],
   )
   await client.query(
@@ -182,7 +194,6 @@ async function seedAnalyticsDefaults(client) {
   const mmrFloorSeed = publicSyntheticMmrUsd(d)
   await client.query(
     `UPDATE analytics_synthetic_state SET
-       synth_growth_start_at = COALESCE(synth_growth_start_at, now()),
        synth_mmr_floor_usd = GREATEST(
          $1::numeric,
          COALESCE(NULLIF(synth_mmr_floor_usd, 0), $1)
@@ -254,6 +265,7 @@ async function seedAnalyticsDefaults(client) {
   const mmrCeilSeed = SYNTH_MMR_CEILING_USD_DEFAULT
   const todayStr = utcDateString()
   const todayMs = Date.parse(`${todayStr}T00:00:00.000Z`)
+  const growthReset = resetAnalyticsGrowth()
 
   /** Keep ~90d of revenue rows for chart API. */
   const retainStart = new Date(todayMs)
@@ -263,50 +275,90 @@ async function seedAnalyticsDefaults(client) {
     retainStartStr,
   ])
 
-  /** 15 calendar days aligned with SYNTH_GROWTH_DAYS_DEFAULT: floor → $110k MMR trajectory. */
   const growthSpan = SYNTH_GROWTH_DAYS_DEFAULT
   const firstDayMs = todayMs - (growthSpan - 1) * 86400000
   const firstDayStr = new Date(firstDayMs).toISOString().slice(0, 10)
+  /** Growth ramp anchor for seeded days: start of window (not “today”), so progress increases day by day. */
+  const growthAnchorIso = `${firstDayStr}T00:00:00.000Z`
 
-  await client.query(
-    `DELETE FROM analytics_revenue_daily WHERE day >= $1::date AND day <= $2::date`,
-    [firstDayStr, todayStr],
+  const { rows: cntRows } = await client.query(
+    `SELECT COUNT(*)::int AS n FROM analytics_revenue_daily`,
   )
+  const revenueRowCount = Number(cntRows[0]?.n) || 0
+  const shouldSeedRevenueWindow = growthReset || revenueRowCount === 0
 
-  /** Ramp starts UTC midnight today — past days stay at floor; today uses wall-clock progress. */
-  const growthAnchorIso = `${todayStr}T00:00:00.000Z`
-  const nowMs = Date.now()
+  if (shouldSeedRevenueWindow) {
+    if (growthReset) {
+      await client.query(
+        `DELETE FROM analytics_revenue_daily WHERE day >= $1::date AND day <= $2::date`,
+        [firstDayStr, todayStr],
+      )
+    }
 
-  for (let i = 0; i < growthSpan; i += 1) {
-    const dayMs = firstDayMs + i * 86400000
-    const dayStr = new Date(dayMs).toISOString().slice(0, 10)
-    const progressAtMs =
-      dayStr === todayStr
-        ? nowMs
-        : Date.parse(`${dayStr}T23:59:59.999Z`)
-    const p = growthProgressMs(growthAnchorIso, growthSpan, progressAtMs)
-    let gross = targetMmrUsd(mmrFloorSeed, mmrCeilSeed, p)
-    gross = Math.round((gross + Math.sin(p * Math.PI * 6) * 48) * 100) / 100
-    gross = Math.max(mmrFloorSeed * 0.98, Math.min(mmrCeilSeed, gross))
-    const net = netFromGrossMmrWiggled(gross, dayStr)
+    const nowMs = Date.now()
+    for (let i = 0; i < growthSpan; i += 1) {
+      const dayMs = firstDayMs + i * 86400000
+      const dayStr = new Date(dayMs).toISOString().slice(0, 10)
+      const progressAtMs =
+        dayStr === todayStr
+          ? nowMs
+          : Date.parse(`${dayStr}T23:59:59.999Z`)
+      const p = growthProgressMs(growthAnchorIso, growthSpan, progressAtMs)
+      let gross = targetMmrUsd(mmrFloorSeed, mmrCeilSeed, p)
+      gross = Math.round((gross + Math.sin(p * Math.PI * 6) * 48) * 100) / 100
+      gross = Math.max(mmrFloorSeed * 0.98, Math.min(mmrCeilSeed, gross))
+      const net = netFromGrossMmrWiggled(gross, dayStr)
+      await client.query(
+        `INSERT INTO analytics_revenue_daily (day, gross_usd, net_usd, notes)
+         VALUES ($1::date, $2, $3, 'seed')
+         ON CONFLICT (day) DO UPDATE SET
+           gross_usd = EXCLUDED.gross_usd,
+           net_usd = EXCLUDED.net_usd,
+           notes = EXCLUDED.notes`,
+        [dayStr, gross, net],
+      )
+    }
+
+    if (growthReset) {
+      await client.query(
+        `UPDATE analytics_synthetic_state SET
+           synth_mmr_floor_usd = GREATEST(
+             $1::numeric,
+             COALESCE(NULLIF(synth_mmr_floor_usd, 0), $1)
+           ),
+           synth_mmr_ceiling_usd = $2,
+           synth_growth_days = $3,
+           synth_growth_start_at = $4::timestamptz
+         WHERE id = 1`,
+        [mmrFloorSeed, mmrCeilSeed, SYNTH_GROWTH_DAYS_DEFAULT, growthAnchorIso],
+      )
+    } else {
+      await client.query(
+        `UPDATE analytics_synthetic_state SET
+           synth_mmr_floor_usd = GREATEST(
+             $1::numeric,
+             COALESCE(NULLIF(synth_mmr_floor_usd, 0), $1)
+           ),
+           synth_mmr_ceiling_usd = $2,
+           synth_growth_days = $3,
+           synth_growth_start_at = COALESCE(synth_growth_start_at, $4::timestamptz)
+         WHERE id = 1`,
+        [mmrFloorSeed, mmrCeilSeed, SYNTH_GROWTH_DAYS_DEFAULT, growthAnchorIso],
+      )
+    }
+  } else {
     await client.query(
-      `INSERT INTO analytics_revenue_daily (day, gross_usd, net_usd, notes)
-       VALUES ($1::date, $2, $3, 'seed')`,
-      [dayStr, gross, net],
+      `UPDATE analytics_synthetic_state SET
+         synth_mmr_floor_usd = GREATEST(
+           $1::numeric,
+           COALESCE(NULLIF(synth_mmr_floor_usd, 0), $1)
+         ),
+         synth_mmr_ceiling_usd = $2,
+         synth_growth_days = $3
+       WHERE id = 1`,
+      [mmrFloorSeed, mmrCeilSeed, SYNTH_GROWTH_DAYS_DEFAULT],
     )
   }
-  await client.query(
-    `UPDATE analytics_synthetic_state SET
-       synth_mmr_floor_usd = GREATEST(
-         $1::numeric,
-         COALESCE(NULLIF(synth_mmr_floor_usd, 0), $1)
-       ),
-       synth_mmr_ceiling_usd = $2,
-       synth_growth_days = $3,
-       synth_growth_start_at = $4::timestamptz
-     WHERE id = 1`,
-    [mmrFloorSeed, mmrCeilSeed, SYNTH_GROWTH_DAYS_DEFAULT, growthAnchorIso],
-  )
 }
 
 async function migrate() {
