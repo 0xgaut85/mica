@@ -245,14 +245,23 @@ router.get('/dashboard', async (_req, res, next) => {
     const net = []
     for (const r of revR.rows) {
       const d = r.day
-      dates.push(typeof d === 'string' ? d.slice(0, 10) : d?.toISOString?.().slice(0, 10) ?? '')
-      gross.push(Number(r.gross_usd))
-      net.push(Number(r.net_usd))
+      const dayStr = typeof d === 'string' ? d.slice(0, 10) : d?.toISOString?.().slice(0, 10) ?? ''
+      dates.push(dayStr)
+
+      const dayEndMs = Date.parse(`${dayStr}T23:59:59.999Z`)
+      const dayProgress = growthProgressMs(growthStartAt, growthDays, dayEndMs)
+      let modelGross = targetMmrUsd(mmrFloor, mmrCeil, dayProgress)
+      modelGross = Math.round((modelGross + Math.sin(dayProgress * Math.PI * 6) * 48) * 100) / 100
+      modelGross = Math.max(mmrFloor * 0.98, Math.min(mmrCeil, modelGross))
+
+      const dbGross = Number(r.gross_usd)
+      const clampedGross = Math.max(dbGross, modelGross)
+      gross.push(clampedGross)
+      net.push(netFromGrossMmrWiggled(clampedGross, dayStr))
     }
 
     const byPlanDisplay = publicStoryByPlan(byPlan, synthState)
     const mmrUsd = Math.round(growthTargetMmr * 100) / 100
-    /** Today (UTC) must match subscription MMR tile; avoids stale/wrong bucket if DB session TZ ≠ UTC or worker lag. */
     const todayUtc = utcDateString()
     const todayIdx = dates.findIndex((x) => x === todayUtc)
     if (todayIdx >= 0) {
