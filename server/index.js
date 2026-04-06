@@ -7,6 +7,7 @@ import profileRouter from './routes/profile.js'
 import subscriptionRouter from './routes/subscription.js'
 import apiKeysRouter from './routes/apikeys.js'
 import analyticsRouter from './routes/analytics.js'
+import mvmNodesRouter from './routes/mvmNodes.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -20,6 +21,7 @@ app.use('/api/profile', profileRouter)
 app.use('/api/subscription', subscriptionRouter)
 app.use('/api/keys', apiKeysRouter)
 app.use('/api/analytics', analyticsRouter)
+app.use('/api/mvm-nodes', mvmNodesRouter)
 
 app.get('/api/health', (_req, res) => res.json({ ok: true }))
 

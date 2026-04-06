@@ -42,4 +42,8 @@ export const api = {
   getKeys: () => request('/keys'),
   createKey: () => request('/keys', { method: 'POST' }),
   revokeKey: (id) => request(`/keys/${id}`, { method: 'DELETE' }),
+
+  getMvmNode: () => request('/mvm-nodes'),
+  registerMvmNode: (data) => request('/mvm-nodes', { method: 'POST', body: data }),
+  disconnectMvmNode: (id) => request(`/mvm-nodes/${id}`, { method: 'DELETE' }),
 }

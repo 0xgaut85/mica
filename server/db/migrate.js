@@ -106,6 +106,19 @@ CREATE TABLE IF NOT EXISTS analytics_electricity_reference (
   source_url TEXT,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE TABLE IF NOT EXISTS mvm_nodes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  wallet_address TEXT NOT NULL REFERENCES users(wallet_address),
+  name TEXT NOT NULL,
+  hardware TEXT NOT NULL,
+  region TEXT NOT NULL,
+  specs TEXT,
+  status TEXT NOT NULL DEFAULT 'provisioning' CHECK (status IN ('provisioning', 'active', 'disconnected')),
+  registered_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  disconnected_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_mvm_wallet ON mvm_nodes(wallet_address);
 `
 
 async function seedAnalyticsDefaults(client) {
@@ -358,6 +371,38 @@ async function seedAnalyticsDefaults(client) {
        WHERE id = 1`,
       [mmrFloorSeed, mmrCeilSeed, SYNTH_GROWTH_DAYS_DEFAULT],
     )
+  }
+
+  /** Fix any stale revenue rows below the growth model floor (legacy $3-4k seeds). */
+  const { rows: staleRows } = await client.query(
+    `SELECT day FROM analytics_revenue_daily WHERE gross_usd < $1`,
+    [mmrFloorSeed * 0.95],
+  )
+  if (staleRows.length) {
+    const { rows: stateRows } = await client.query(
+      `SELECT synth_growth_start_at, synth_growth_days, synth_mmr_floor_usd, synth_mmr_ceiling_usd
+       FROM analytics_synthetic_state WHERE id = 1`,
+    )
+    const st = stateRows[0]
+    const anchor = st?.synth_growth_start_at
+    const days = Number(st?.synth_growth_days) || SYNTH_GROWTH_DAYS_DEFAULT
+    const floor = Number(st?.synth_mmr_floor_usd) || mmrFloorSeed
+    const ceil = Number(st?.synth_mmr_ceiling_usd) || mmrCeilSeed
+    for (const row of staleRows) {
+      const dayStr = typeof row.day === 'string' ? row.day.slice(0, 10) : row.day?.toISOString?.().slice(0, 10)
+      if (!dayStr) continue
+      const endMs = Date.parse(`${dayStr}T23:59:59.999Z`)
+      const p = growthProgressMs(anchor, days, endMs)
+      let gross = targetMmrUsd(floor, ceil, p)
+      gross = Math.round((gross + Math.sin(p * Math.PI * 6) * 48) * 100) / 100
+      gross = Math.max(floor * 0.98, Math.min(ceil, gross))
+      const net = netFromGrossMmrWiggled(gross, dayStr)
+      await client.query(
+        `UPDATE analytics_revenue_daily SET gross_usd = $1, net_usd = $2 WHERE day = $3`,
+        [gross, net, row.day],
+      )
+    }
+    console.log(`Fixed ${staleRows.length} stale revenue row(s) below growth floor.`)
   }
 }
 

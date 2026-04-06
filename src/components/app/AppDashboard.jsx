@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAccount, useDisconnect as useEvmDisconnect, useSignMessage } from 'wagmi'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
@@ -8,6 +9,7 @@ import ConnectWalletScreen from './ConnectWalletScreen'
 import ProfileCard from './ProfileCard'
 import PricingCards from './PricingCards'
 import BillingSection from './BillingSection'
+import MvmNodeSection from './MvmNodeSection'
 import { useAppStore, ASSETS } from './useAppStore'
 import { api, setToken, getToken } from './api'
 import { usePayment } from './usePayment'
@@ -265,17 +267,21 @@ function DashboardInner() {
         </section>
 
         <section className="mb-10">
+          <MvmNodeSection hasActivePlan={!!subscription} />
+        </section>
+
+        <section className="mb-10">
           <div className="flex items-center gap-3 mb-5">
             <span className="w-2 h-2 bg-red-mica shrink-0" />
             <p className="font-mono text-[10px] tracking-[0.25em] text-gray-500 uppercase">Resources</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <a href="https://docs.mica.energy" target="_blank" rel="noopener noreferrer"
+            <Link to="/whitepaper#api"
               className="block p-5 border border-dashed border-[var(--gray-border)] bg-white/40 hover:border-[var(--gray-border-dark)] transition-colors clip-corner-tr-sm">
               <p className="font-display font-light text-gray-900 mb-1">API Documentation</p>
               <p className="font-mono text-[11px] text-gray-500">Endpoints, authentication, and examples.</p>
-            </a>
-            <a href="mailto:support@mica.energy"
+            </Link>
+            <a href="https://x.com/micadotenergy" target="_blank" rel="noopener noreferrer"
               className="block p-5 border border-dashed border-[var(--gray-border)] bg-white/40 hover:border-[var(--gray-border-dark)] transition-colors clip-corner-tr-sm">
               <p className="font-display font-light text-gray-900 mb-1">Support</p>
               <p className="font-mono text-[11px] text-gray-500">Reach out for help or questions.</p>
