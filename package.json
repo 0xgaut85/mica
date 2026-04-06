@@ -9,7 +9,7 @@
     "start": "node scripts/railway-serve.mjs",
     "preview": "vite preview",
     "railway:deploy-api": "railway up server --path-as-root -s mica-api -d --ci",
-    "railway:migrate-api": "railway ssh -s mica-api -- sh -c \"cd /app && node db/migrate.js\"",
+    "railway:migrate-api": "railway ssh -s mica-api -- sh -c \"cd /app/server && node db/migrate.js\"",
     "analytics:worker": "npm run analytics:worker --prefix server"
   },
   "dependencies": {
