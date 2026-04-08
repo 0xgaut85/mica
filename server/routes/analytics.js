@@ -171,14 +171,12 @@ router.get('/subscription-revenue', async (_req, res, next) => {
     const mmrUsd = mmrFromPlanCounts(merged)
     const arrUsd = mmrUsd * 12
     const activeTotal = merged.basic + merged.premium + merged.enterprise
-    const enterpriseExcludedFromMmr = merged.enterprise > 0
 
     res.json({
       mmrUsd,
       arrUsd,
       activeTotal,
       byPlan: merged,
-      enterpriseExcludedFromMmr,
     })
   } catch (err) {
     next(err)
@@ -275,7 +273,6 @@ router.get('/dashboard', async (_req, res, next) => {
     const arrUsd = mmrUsd * 12
     const activeTotal =
       byPlanDisplay.basic + byPlanDisplay.premium + byPlanDisplay.enterprise
-    const enterpriseExcludedFromMmr = byPlanDisplay.enterprise > 0
     /** Active users tile = same number as “Total active” (sum of seats). */
     const usersDisplayed = activeTotal
     const apiKeysDisplayed = apiKeysForUsers(activeTotal)
@@ -325,7 +322,6 @@ router.get('/dashboard', async (_req, res, next) => {
         activeTotal,
         byPlan: byPlanDisplay,
         byPlanRegistered: byPlan,
-        enterpriseExcludedFromMmr,
       },
     })
   } catch (err) {

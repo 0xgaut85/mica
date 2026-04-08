@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import pool from './pool.js'
 import { netFromGrossMmrWiggled } from '../lib/analyticsRevenue.js'
-import { growthProgressMs, targetMmrUsd } from '../lib/analyticsSynthGrowth.js'
+import { growthProgressMs, seatsForTargetMmr, targetMmrUsd } from '../lib/analyticsSynthGrowth.js'
 import {
   PUBLIC_SYNTH_DEFAULTS,
   publicSyntheticMmrUsd,
@@ -57,40 +57,40 @@ CREATE TABLE IF NOT EXISTS analytics_synthetic_state (
   mvm_created INT NOT NULL DEFAULT 14,
   mvm_running INT NOT NULL DEFAULT 11,
   cumulative_kwh_shifted DOUBLE PRECISION NOT NULL DEFAULT 2180000,
-  dashboard_users INT NOT NULL DEFAULT 485,
-  subs_basic_public INT NOT NULL DEFAULT 400,
-  subs_premium_public INT NOT NULL DEFAULT 81,
+  dashboard_users INT NOT NULL DEFAULT 82,
+  subs_basic_public INT NOT NULL DEFAULT 60,
+  subs_premium_public INT NOT NULL DEFAULT 18,
   subs_enterprise_public INT NOT NULL DEFAULT 4,
-  api_keys_public INT NOT NULL DEFAULT 728,
-  synth_mmr_floor_usd NUMERIC(14,2) NOT NULL DEFAULT 28150,
+  api_keys_public INT NOT NULL DEFAULT 123,
+  synth_mmr_floor_usd NUMERIC(14,2) NOT NULL DEFAULT 29900,
   synth_mmr_ceiling_usd NUMERIC(14,2) NOT NULL DEFAULT 110000,
-  synth_growth_days INT NOT NULL DEFAULT 15,
+  synth_growth_days INT NOT NULL DEFAULT 21,
   synth_growth_start_at TIMESTAMPTZ,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 ALTER TABLE analytics_synthetic_state
-  ADD COLUMN IF NOT EXISTS synth_mmr_floor_usd NUMERIC(14,2) NOT NULL DEFAULT 28150;
+  ADD COLUMN IF NOT EXISTS synth_mmr_floor_usd NUMERIC(14,2) NOT NULL DEFAULT 29900;
 ALTER TABLE analytics_synthetic_state
   ADD COLUMN IF NOT EXISTS synth_mmr_ceiling_usd NUMERIC(14,2) NOT NULL DEFAULT 110000;
 ALTER TABLE analytics_synthetic_state
-  ADD COLUMN IF NOT EXISTS synth_growth_days INT NOT NULL DEFAULT 15;
+  ADD COLUMN IF NOT EXISTS synth_growth_days INT NOT NULL DEFAULT 21;
 ALTER TABLE analytics_synthetic_state
   ADD COLUMN IF NOT EXISTS synth_growth_start_at TIMESTAMPTZ;
 
 ALTER TABLE analytics_synthetic_state
-  ALTER COLUMN synth_growth_days SET DEFAULT 15;
+  ALTER COLUMN synth_growth_days SET DEFAULT 21;
 
 ALTER TABLE analytics_synthetic_state
-  ADD COLUMN IF NOT EXISTS dashboard_users INT NOT NULL DEFAULT 485;
+  ADD COLUMN IF NOT EXISTS dashboard_users INT NOT NULL DEFAULT 82;
 ALTER TABLE analytics_synthetic_state
-  ADD COLUMN IF NOT EXISTS subs_basic_public INT NOT NULL DEFAULT 400;
+  ADD COLUMN IF NOT EXISTS subs_basic_public INT NOT NULL DEFAULT 60;
 ALTER TABLE analytics_synthetic_state
-  ADD COLUMN IF NOT EXISTS subs_premium_public INT NOT NULL DEFAULT 81;
+  ADD COLUMN IF NOT EXISTS subs_premium_public INT NOT NULL DEFAULT 18;
 ALTER TABLE analytics_synthetic_state
   ADD COLUMN IF NOT EXISTS subs_enterprise_public INT NOT NULL DEFAULT 4;
 ALTER TABLE analytics_synthetic_state
-  ADD COLUMN IF NOT EXISTS api_keys_public INT NOT NULL DEFAULT 728;
+  ADD COLUMN IF NOT EXISTS api_keys_public INT NOT NULL DEFAULT 123;
 
 CREATE TABLE IF NOT EXISTS analytics_revenue_daily (
   day DATE PRIMARY KEY,
@@ -403,6 +403,38 @@ async function seedAnalyticsDefaults(client) {
       )
     }
     console.log(`Fixed ${staleRows.length} stale revenue row(s) below growth floor.`)
+  }
+
+  /** Enterprise revenue pivot: transition seat counts to 90%-enterprise model at current progress. */
+  const { rows: pivotRows } = await client.query(
+    `SELECT synth_growth_start_at, synth_growth_days, synth_mmr_floor_usd, synth_mmr_ceiling_usd
+     FROM analytics_synthetic_state WHERE id = 1`,
+  )
+  const pivotSt = pivotRows[0]
+  if (pivotSt) {
+    const pDays = Number(pivotSt.synth_growth_days) || SYNTH_GROWTH_DAYS_DEFAULT
+    const pFloor = Number(pivotSt.synth_mmr_floor_usd) || mmrFloorSeed
+    const pCeil = Number(pivotSt.synth_mmr_ceiling_usd) || SYNTH_MMR_CEILING_USD_DEFAULT
+    const pProgress = growthProgressMs(pivotSt.synth_growth_start_at, pDays)
+    const pTargetMmr = targetMmrUsd(pFloor, pCeil, pProgress)
+    const seats = seatsForTargetMmr(pTargetMmr)
+    const pUsers = seats.basic + seats.premium + seats.enterprise
+    const pKeys = Math.round(pUsers * 1.5)
+    await client.query(
+      `UPDATE analytics_synthetic_state SET
+         subs_basic_public = $1,
+         subs_premium_public = $2,
+         subs_enterprise_public = $3,
+         dashboard_users = $4,
+         api_keys_public = $5,
+         synth_mmr_floor_usd = GREATEST(synth_mmr_floor_usd, $6::numeric)
+       WHERE id = 1`,
+      [seats.basic, seats.premium, seats.enterprise, pUsers, pKeys, mmrFloorSeed],
+    )
+    console.log(
+      `Enterprise pivot: progress=${(pProgress * 100).toFixed(1)}%, targetMMR=$${Math.round(pTargetMmr)}, ` +
+      `seats={basic:${seats.basic}, premium:${seats.premium}, enterprise:${seats.enterprise}}, users=${pUsers}`,
+    )
   }
 }
 

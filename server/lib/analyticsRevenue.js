@@ -6,7 +6,10 @@ export const NET_REVENUE_FRACTION = 0.88
 export function mmrFromPlanCounts(byPlan) {
   const basic = byPlan.basic ?? 0
   const premium = byPlan.premium ?? 0
-  return basic * (PLAN_PRICES.basic ?? 0) + premium * (PLAN_PRICES.premium ?? 0)
+  const enterprise = byPlan.enterprise ?? 0
+  return basic * (PLAN_PRICES.basic ?? 0)
+       + premium * (PLAN_PRICES.premium ?? 0)
+       + enterprise * (PLAN_PRICES.enterprise ?? 0)
 }
 
 export function netFromGrossMmr(gross) {
@@ -47,7 +50,6 @@ export async function fetchActivePlanCounts(pool) {
 
 /**
  * Dashboard / worker: MMR = Σ (seats × tier price). Public synthetic floors keep metrics non-zero until real subs dominate.
- * Enterprise seats can be synthetic (published row); still excluded from $ MMR until priced.
  */
 export function mergePublicSubscriptionCounts(realByPlan, synthRow) {
   const sb = Number(synthRow?.subs_basic_public)

@@ -8,7 +8,7 @@ import { PLAN_PRICES } from './planPrices.js'
 export const MVM_CREATED_CAP = 100
 
 /** Growth window length (days) for floor → ceiling MMR and linked synth metrics. */
-export const SYNTH_GROWTH_DAYS_DEFAULT = 15
+export const SYNTH_GROWTH_DAYS_DEFAULT = 21
 
 /** Dashboard revenue query: max span (days) ending today (UTC). */
 export const REVENUE_SERIES_QUERY_DAYS = 90
@@ -36,13 +36,13 @@ export function utcDateString(now = new Date()) {
   return d.toISOString().slice(0, 10)
 }
 
-const _SUBS_BASIC_FLOOR = 400
-const _SUBS_PREMIUM_FLOOR = 81
+const _SUBS_BASIC_FLOOR = 60
+const _SUBS_PREMIUM_FLOOR = 18
 
-/** Published enterprise seats (worker grows toward ~10% of total; basic+premium ~90%). */
+/** Published enterprise seats (few clients, big tickets — ~90% of revenue). */
 export const PUBLIC_ENTERPRISE_SEATS_FLOOR = 4
-/** Target share of total seats (basic + premium + enterprise). */
-export const PUBLIC_ENTERPRISE_SEAT_SHARE = 0.1
+/** Target share of total seats (basic + premium + enterprise) — low because enterprise seats are high-value. */
+export const PUBLIC_ENTERPRISE_SEAT_SHARE = 0.02
 
 /** API key count = 1.5× active seat total (rounded). */
 export function apiKeysForUsers(userCount) {
@@ -69,9 +69,11 @@ export const PUBLIC_SYNTH_DEFAULTS = {
 export function publicSyntheticMmrUsd(row = PUBLIC_SYNTH_DEFAULTS) {
   const b = Number(row?.subs_basic_public) || 0
   const p = Number(row?.subs_premium_public) || 0
+  const e = Number(row?.subs_enterprise_public) || 0
   const pb = PLAN_PRICES.basic ?? 40
   const pp = PLAN_PRICES.premium ?? 150
-  return b * pb + p * pp
+  const pe = PLAN_PRICES.enterprise ?? 6200
+  return b * pb + p * pp + e * pe
 }
 
 /**
@@ -84,10 +86,10 @@ export function effectiveSynthMmrFloorUsd(synthRow) {
 }
 
 /** Above this, treat `dashboard_users` as legacy seed noise and snap to public defaults. */
-const SYNTH_USERS_CORRUPT_THRESHOLD = 2200
+const SYNTH_USERS_CORRUPT_THRESHOLD = 600
 /** Inflated test subscription rows in `analytics_synthetic_state` — snap seat floors to defaults. */
-const SYNTH_SUBS_BASIC_CORRUPT_THRESHOLD = 2000
-const SYNTH_SUBS_PREMIUM_CORRUPT_THRESHOLD = 500
+const SYNTH_SUBS_BASIC_CORRUPT_THRESHOLD = 400
+const SYNTH_SUBS_PREMIUM_CORRUPT_THRESHOLD = 120
 
 export function normalizeSynthStateRow(row) {
   const d = PUBLIC_SYNTH_DEFAULTS

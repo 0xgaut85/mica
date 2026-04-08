@@ -434,7 +434,7 @@ function ActivePlanPills({ revenue, revStatus }) {
         <span className="text-[var(--black)] tabular-nums font-medium">{premium}</span>
       </span>
       <span className="font-mono text-xs md:text-sm tracking-wide text-gray-700 border border-dashed border-[var(--gray-border)] bg-white/50 px-4 py-2.5">
-        Enterprise <span className="text-zinc-500">contract</span>{' '}
+        Enterprise <span className="text-zinc-500">avg ~$6.2k/mo</span>{' '}
         <span className="text-[var(--black)] tabular-nums font-medium">{enterprise}</span>
       </span>
       <span className="font-mono text-xs md:text-sm tracking-wide text-gray-700 border border-dashed border-[var(--gray-border)] bg-white/50 px-4 py-2.5">
@@ -633,7 +633,6 @@ export default function Analytics() {
 
   const mmr = rev?.mmrUsd ?? 0
   const arr = rev?.arrUsd ?? 0
-  const enterpriseNote = rev?.enterpriseExcludedFromMmr
   const seatBasic = rev?.byPlan?.basic
   const seatPremium = rev?.byPlan?.premium
   const seatEnterprise = rev?.byPlan?.enterprise
@@ -753,7 +752,7 @@ export default function Analytics() {
                   large
                   metricId="seats-enterprise"
                   label="Enterprise"
-                  sublabel="Active seats · ~10% of total (contract)"
+                  sublabel="Avg ~$6.2k/mo per contract"
                   value={status === 'ready' && seatEnterprise != null ? String(seatEnterprise) : undefined}
                 />
               </div>
@@ -828,7 +827,7 @@ export default function Analytics() {
                 banner
                 hero
                 title="Gross revenue"
-                subtitle="MMR implied by active basic & premium seats (enterprise excluded until priced)."
+                subtitle="MMR from all active seats (Basic, Premium, Enterprise)."
                 yLabel="USD / month"
                 xLabel="Day (UTC)"
                 series={grossSeries}
@@ -838,7 +837,7 @@ export default function Analytics() {
                 scrubbable
                 footerNote={
                   grossSeries?.length >= 2
-                    ? 'Daily series (UTC). Tier-priced MMR (Basic $40/mo, Premium $150/mo). Hover or drag for date and USD.'
+                    ? 'Daily series (UTC). Tier-priced MMR (Basic $40/mo, Premium $150/mo, Enterprise avg ~$6.2k/mo). Hover or drag for date and USD.'
                     : 'Awaiting series data.'
                 }
               />
@@ -861,11 +860,6 @@ export default function Analytics() {
                 }
               />
             </div>
-            {enterpriseNote ? (
-              <p className="font-mono text-xs md:text-sm text-gray-600 leading-relaxed">
-                Enterprise seats are active but not included in MMR until a contract value is on file.
-              </p>
-            ) : null}
           </div>
         </div>
 

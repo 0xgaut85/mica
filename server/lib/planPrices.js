@@ -1,2 +1,2 @@
-/** Monthly USD price per plan for MMR. Enterprise is negotiated; omit from sum. */
-export const PLAN_PRICES = { basic: 40, premium: 150 }
+/** Monthly USD price per plan for MMR. Enterprise = avg contract value. */
+export const PLAN_PRICES = { basic: 40, premium: 150, enterprise: 6200 }

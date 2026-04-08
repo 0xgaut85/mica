@@ -1,6 +1,5 @@
 import { netFromGrossMmrWiggled } from './analyticsRevenue.js'
 import {
-  enterpriseSeatsTargetForMix,
   growthProgressMs,
   seatsForTargetMmr,
   stepTowardInt,
@@ -32,7 +31,7 @@ const KWH_BASE = d.cumulative_kwh_shifted
 /**
  * Single analytics tick inside an open transaction (caller owns BEGIN/COMMIT).
  * Drives public MMR from synth_mmr_floor_usd → synth_mmr_ceiling_usd over synth_growth_days,
- * with basic/premium/enterprise seats (enterprise targets ~10% of total, floor 4), MVM, and kWh.
+ * with basic/premium/enterprise seats (~90% of revenue from enterprise), MVM, and kWh.
  * `dashboard_users` = seat sum; API keys track 1.5× that count.
  *
  * @param {import('pg').PoolClient} client
@@ -116,6 +115,7 @@ export async function runAnalyticsTickOnce(client) {
 
   subsBasicPublic = stepTowardInt(subsBasicPublic, seatTargets.basic, ticksLeft)
   subsPremiumPublic = stepTowardInt(subsPremiumPublic, seatTargets.premium, ticksLeft)
+  subsEnterprisePublic = stepTowardInt(subsEnterprisePublic, seatTargets.enterprise, ticksLeft)
 
   mvmCreated = clamp(
     stepTowardInt(mvmCreated, mvmTargetCreated, ticksLeft),
@@ -138,19 +138,10 @@ export async function runAnalyticsTickOnce(client) {
   }
 
   if (progress >= 1) {
-    if (randomChance(0.004) && subsBasicPublic < 500_000) subsBasicPublic += 1
-    if (randomChance(0.003) && subsPremiumPublic < 200_000) subsPremiumPublic += 1
+    if (randomChance(0.004) && subsBasicPublic < 500) subsBasicPublic += 1
+    if (randomChance(0.003) && subsPremiumPublic < 200) subsPremiumPublic += 1
+    if (randomChance(0.002) && subsEnterprisePublic < 50) subsEnterprisePublic += 1
   }
-
-  const enterpriseTarget = enterpriseSeatsTargetForMix(
-    subsBasicPublic,
-    subsPremiumPublic,
-  )
-  subsEnterprisePublic = stepTowardInt(
-    subsEnterprisePublic,
-    enterpriseTarget,
-    ticksLeft,
-  )
 
   const dashboardUsers =
     subsBasicPublic + subsPremiumPublic + subsEnterprisePublic

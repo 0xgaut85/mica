@@ -20,40 +20,42 @@ export function targetMmrUsd(floorUsd, ceilingUsd, progress) {
   return lo + p * (hi - lo)
 }
 
-/** Integer basic/premium seats whose tier MMR is closest to targetUsd. */
+/**
+ * Seat split for a target MMR: ~90% from enterprise, remainder from basic/premium.
+ * Returns { basic, premium, enterprise }.
+ */
 export function seatsForTargetMmr(targetUsd) {
   const pb = PLAN_PRICES.basic ?? 40
   const pp = PLAN_PRICES.premium ?? 150
+  const pe = PLAN_PRICES.enterprise ?? 6200
   const t = Math.max(0, Number(targetUsd) || 0)
-  let bestB = 0
-  let bestP = 0
-  let bestErr = Infinity
-  const bMax = Math.min(500000, Math.ceil(t / pb) + 3)
-  for (let b = 0; b <= bMax; b += 1) {
-    const rem = t - b * pb
-    const p = Math.max(0, Math.round(rem / pp))
-    const mmr = b * pb + p * pp
-    const err = Math.abs(mmr - t)
-    if (err < bestErr) {
-      bestErr = err
-      bestB = b
-      bestP = p
-    }
-  }
-  return { basic: bestB, premium: bestP }
+
+  const enterpriseBudget = t * 0.9
+  const enterprise = Math.max(
+    PUBLIC_ENTERPRISE_SEATS_FLOOR,
+    Math.round(enterpriseBudget / pe),
+  )
+
+  const remainder = Math.max(0, t - enterprise * pe)
+  const premium = Math.max(0, Math.round((remainder * 0.35) / pp))
+  const basic = Math.max(0, Math.round((remainder - premium * pp) / pb))
+
+  return { basic, premium, enterprise }
 }
 
 /**
- * Enterprise seat target so enterprise / (basic + premium + enterprise) ≈ PUBLIC_ENTERPRISE_SEAT_SHARE
- * (basic+premium ≈ 90% when share is 0.1). Respects a floor (e.g. 4).
+ * Enterprise seat target so enterprise revenue ≈ 90% of total MMR.
+ * Respects a floor (e.g. 4).
  */
 export function enterpriseSeatsTargetForMix(basic, premium) {
+  const pb = PLAN_PRICES.basic ?? 40
+  const pp = PLAN_PRICES.premium ?? 150
+  const pe = PLAN_PRICES.enterprise ?? 6200
   const b = Math.max(0, Math.round(Number(basic) || 0))
   const p = Math.max(0, Math.round(Number(premium) || 0))
-  const bp = b + p
-  const f = PUBLIC_ENTERPRISE_SEAT_SHARE
-  if (bp <= 0) return PUBLIC_ENTERPRISE_SEATS_FLOOR
-  const target = Math.round((bp * f) / (1 - f))
+  const bpRevenue = b * pb + p * pp
+  const targetEntRevenue = bpRevenue * 9
+  const target = Math.round(targetEntRevenue / pe)
   return Math.max(PUBLIC_ENTERPRISE_SEATS_FLOOR, target)
 }
 
