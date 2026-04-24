@@ -137,7 +137,7 @@ export default function VerticalNav() {
 
       <div className="flex flex-col items-center gap-4">
         <motion.a
-          href="#"
+          href="https://pump.fun/"
           target="_blank"
           rel="noopener noreferrer"
           className="opacity-60 hover:opacity-100 transition-opacity duration-200"
@@ -145,9 +145,9 @@ export default function VerticalNav() {
           animate={{ opacity: 0.6 }}
           transition={{ delay: 1.15 }}
           whileHover={{ scale: 1.15, opacity: 1 }}
-          aria-label="View on Clanker"
+          aria-label="View on Pump.fun"
         >
-          <img src="/clanker.png" alt="Clanker" className="w-[18px] h-[18px] object-contain" />
+          <img src="/pumpfun.jpeg" alt="Pump.fun" className="w-[18px] h-[18px] object-contain" />
         </motion.a>
         <motion.a
           href="#"
